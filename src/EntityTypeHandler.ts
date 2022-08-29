@@ -155,7 +155,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                     }
                     const format = ft.format ?? infoForType.redetectFormat(datum, "many", field, v[0])
                     switch(format) {
-                        case FetchedRelationFormat.FullNoType:
+                        case FetchedRelationFormat.FullNoType: {
                             const fnt = v as RelationFullNoType[]
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
@@ -166,6 +166,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                             ).map(vi => ({...vi, type})))
                             multiRelationships[field] = {data: fnt.map(vi => ({id: vi.id, type}))}
                             break
+                        }
                         case FetchedRelationFormat.FullWithType:
                             const fwt = v as RelationFull[]
                             dataToProcess.push(...fwt.filter(
@@ -173,24 +174,28 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                             ))
                             multiRelationships[field] = {data: fwt.map(vi => ({id: vi.id, type: vi.type}))}
                             break
-                        case FetchedRelationFormat.IdOnly:
+                        case FetchedRelationFormat.IdOnly: {
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
+                            const type = ft.types[0]
                             const io = v as RelationIdOnly[]
-                            multiRelationships[field] = {data: io.map(vi => ({...vi, type: ft.types[0]}))}
+                            multiRelationships[field] = {data: io.map(vi => ({...vi, type}))}
                             break
+                        }
                         case FetchedRelationFormat.IdType:
                             const it = v as RelationIdType[]
                             multiRelationships[field] = {data: it}
                             break
-                        case FetchedRelationFormat.RawId:
+                        case FetchedRelationFormat.RawId: {
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
+                            const type = ft.types[0]
                             const n = v as (string | number)[]
-                            multiRelationships[field] = {data: n.map(vi => ({id: "" + vi, type: ft.types[0]}))}
+                            multiRelationships[field] = {data: n.map(vi => ({id: "" + vi, type}))}
                             break
+                        }
                     }
                 }
                 for(const [field, ft] of Object.entries(formats.single)) {
@@ -205,8 +210,8 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
-                            const vi = v as RelationFullNoType
                             const type = ft.types[0]
+                            const vi = v as RelationFullNoType
                             if(seenByType.addOnce(type, vi.id)) {
                                 dataToProcess.push({...vi, type})
                             }
@@ -226,7 +231,8 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
-                            singleRelationships[field] = {data: {id: vi.id, type: ft.types[0]}}
+                            const type = ft.types[0]
+                            singleRelationships[field] = {data: {id: vi.id, type}}
                             break
                         }
                         case FetchedRelationFormat.IdType: {
@@ -234,13 +240,15 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                             singleRelationships[field] = {data: {id: vi.id, type: vi.type}}
                             break
                         }
-                        case FetchedRelationFormat.RawId:
+                        case FetchedRelationFormat.RawId: {
                             const vi = v as string | number
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
-                            singleRelationships[field] = {data: {id: "" + vi, type: ft.types[0]}}
+                            const type = ft.types[0]
+                            singleRelationships[field] = {data: {id: "" + vi, type}}
                             break
+                        }
                     }
                 }
                 const datumOut: JsonApiData<any> = {
