@@ -1,0 +1,283 @@
+import { CacheableTypeInfo } from "./CacheableTypeInfo"
+import { FetchedRelationFormat } from "./FetchedRelationFormat"
+import { JsonApiData } from "./JsonApiResponse"
+import { OrderedMapArray } from "./OrderedMapArray"
+import { RelationIdType, Relation, RelationFullNoType, RelationFull, RelationIdOnly } from "./Relation"
+import { Schema } from "./Schema"
+import { SchemaFactory } from "./SchemaFactory"
+import { TypeIdSet } from "./TypeIdSet"
+
+/**
+ * You _might_ want to do this without an ORM system. That's because really this
+ * doesn't want fully formed objects, and just the ID is fine for most cases.
+ */
+export abstract class EntityTypeHandler<I, E extends {id: I}> {
+    /**
+     *
+     */
+    protected abstract schema: Schema<any, any, any, any>
+
+    /**
+     *
+     */
+    protected abstract schemaFactory: SchemaFactory
+
+    /**
+     *
+     * @param id
+     * @param data
+     * @throws FIXME if the user has no access
+     */
+    abstract create(id: I, data: Partial<E>): boolean
+    /**
+     *
+     * @param ids
+     * @throws FIXME if the user has no access
+     */
+    abstract delete(...ids: I[])
+
+    /**
+     * Traditionally, this should add further filter rules in the request
+     * itself to handle access control. Approaches may include:
+     *
+     * - Modifying the request in some cases (global read vs no global read)
+     * - Immediately returning nothing (no read access at all)
+     * - Adding more conditions (scoped read access)
+     * - Adding JOINs (explicit per-item read access)
+     *
+     * @param filter
+     * @param objectsSeen
+     * @param sort
+     * @param page
+     * @param include
+     */
+    abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): {
+        data: Partial<E>[],
+        included?: any[],
+        nextPage?: any,
+    }
+
+    /**
+     * This defines how relations look locally (ie, an ID in the entity
+     * itself, typically defining a single parent relationship). If you provide
+     * this and the relation is _not_ already in the response, it'll be
+     * injected. If it is already in the response, the type will be set.
+     */
+    abstract readonly localRelations: Partial<Record<string & keyof E, {field: string, type: string}[]>>
+
+    /**
+     * Getting upstream relations for the object _may_ be a little complex for
+     * TypeORM. This is part of the whole problem with using an ORM system and
+     * not really wanting it.
+     *
+     * If no include has been specified, you _may_ want to join and shove the
+     * related object in `included`, but in general that's not beneficial.
+     *
+     * If you want child (mostly to-many) relations in here, you might choose to
+     * set a default include to follow that relation, because frankly any
+     * follow-up searches are likely to be more expensive.
+     *
+     * If you do provide to-many responses here, the objects should be defined
+     * with an unstored (fixed) type field, eg. `readonly type = "book"`.
+     *
+     * On TypeORM, it's recommended to do find(..., {loadRelationIds: true})
+     * rather than eager-loading the relations, unless the relations are to be
+     * actually included. You can then use
+     * c.getMetadata(e).relations.find(r => r.propertyName == p).type to get
+     * back to the original entity type, and potentially c.getMetadata(type)
+     * .target
+     *
+     * @param id
+     * @param include Note that this means something different to `included`.
+     * This is the fields to include, and `included` are whole objects.
+     * @throws FIXME if the user has no access
+     * @returns
+     */
+    abstract getOne(id: I, include?: string[]): {data: Partial<E>, included?: any[]} | null
+
+    /**
+     *
+     * @param dataInitial
+     * @param length
+     * @param type
+     * @returns
+     */
+    postProcess(dataInitial: Iterable<{id: string}>, length: number, type: string) {
+        if(!length) {
+            return {
+                data: [] as JsonApiData<any>[],
+            }
+        }
+
+        const data: JsonApiData<any>[] = []
+        const included: JsonApiData<any>[] = []
+        let firstRun = true
+
+        const dataToProcess = new OrderedMapArray()
+
+        const seenByType = new TypeIdSet()
+
+        function *addType(typeless: Iterable<{id: string}>, type: string) {
+            for(const v of typeless) {
+                yield {...v, type}
+            }
+        }
+
+        const infoForType = new CacheableTypeInfo(this.schemaFactory)
+
+        for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, type); dataSet; dataSet = dataToProcess.shift()) {
+            for(const datum of dataSet) {
+                if(firstRun) {
+                    // This applies only to the first and second sets. After that
+                    // they'll be pre-excluded.
+                    //
+                    // It might seem surprising that it applies to the _second_, but
+                    // in practice included entities can't trump data entities, and
+                    // that means we need to build the included list separately and
+                    // test it on the subsequent run.
+
+                    // First time we might have duplicates already in the list
+                    if(seenByType.has(datum.type, datum.id)) {
+                        continue
+                    }
+                }
+                seenByType.add(datum.type, datum.id)
+
+                const {relationFormats: formats, retainedAttributes} = infoForType.get(datum)
+
+                const singleRelationships: {[r: string]: {data: RelationIdType | null}} = {}
+                const multiRelationships: {[r: string]: {data: RelationIdType[]}} = {}
+                for(const [field, ft] of Object.entries(formats.many)) {
+                    const v: Relation[] = datum[field]
+                    if(v.length == 0) {
+                        multiRelationships[field] = {data: []}
+                        continue
+                    }
+                    const format = ft.format ?? infoForType.redetectFormat(datum, "many", field, v[0])
+                    switch(format) {
+                        case FetchedRelationFormat.FullNoType:
+                            const fnt = v as RelationFullNoType[]
+                            if(ft.types.length != 1) {
+                                throw new Error(`No singular type for autodetection on relation ${field}`)
+                            }
+                            const type = ft.types[0]
+                            dataToProcess.push(...fnt.filter(
+                                vi => seenByType.addOnce(type, vi.id)
+                            ).map(vi => ({...vi, type})))
+                            multiRelationships[field] = {data: fnt.map(vi => ({id: vi.id, type}))}
+                            break
+                        case FetchedRelationFormat.FullWithType:
+                            const fwt = v as RelationFull[]
+                            dataToProcess.push(...fwt.filter(
+                                vi => seenByType.addOnce(vi.type, vi.id)
+                            ))
+                            multiRelationships[field] = {data: fwt.map(vi => ({id: vi.id, type: vi.type}))}
+                            break
+                        case FetchedRelationFormat.IdOnly:
+                            if(ft.types.length != 1) {
+                                throw new Error(`No singular type for autodetection on relation ${field}`)
+                            }
+                            const io = v as RelationIdOnly[]
+                            multiRelationships[field] = {data: io.map(vi => ({...vi, type: ft.types[0]}))}
+                            break
+                        case FetchedRelationFormat.IdType:
+                            const it = v as RelationIdType[]
+                            multiRelationships[field] = {data: it}
+                            break
+                        case FetchedRelationFormat.RawId:
+                            if(ft.types.length != 1) {
+                                throw new Error(`No singular type for autodetection on relation ${field}`)
+                            }
+                            const n = v as (string | number)[]
+                            multiRelationships[field] = {data: n.map(vi => ({id: "" + vi, type: ft.types[0]}))}
+                            break
+                    }
+                }
+                for(const [field, ft] of Object.entries(formats.single)) {
+                    if(datum[field] === null) {
+                        singleRelationships[field] = {data: null}
+                        continue
+                    }
+                    const v: Relation = datum[field]
+                    const format = ft.format ?? infoForType.redetectFormat(datum, "single", field, v)
+                    switch(format) {
+                        case FetchedRelationFormat.FullNoType: {
+                            if(ft.types.length != 1) {
+                                throw new Error(`No singular type for autodetection on relation ${field}`)
+                            }
+                            const vi = v as RelationFullNoType
+                            const type = ft.types[0]
+                            if(seenByType.addOnce(type, vi.id)) {
+                                dataToProcess.push({...vi, type})
+                            }
+                            singleRelationships[field] = {data: {id: vi.id, type: ft.types[0]}}
+                            break
+                        }
+                        case FetchedRelationFormat.FullWithType: {
+                            const vi = v as RelationFullNoType
+                            if(seenByType.addOnce(vi.type, vi.id)) {
+                                dataToProcess.push({...vi, type})
+                            }
+                            singleRelationships[field] = {data: {id: vi.id, type: vi.types}}
+                            break
+                        }
+                        case FetchedRelationFormat.IdOnly:
+                            if(ft.types.length != 1) {
+                                throw new Error(`No singular type for autodetection on relation ${field}`)
+                            }
+                            //
+                            break
+                        case FetchedRelationFormat.IdType:
+                            //
+                            break
+                        case FetchedRelationFormat.RawId:
+                            if(ft.types.length != 1) {
+                                throw new Error(`No singular type for autodetection on relation ${field}`)
+                            }
+                            //
+                            break
+                    }
+                }
+                const datumOut: JsonApiData<any> = {
+                    attributes: <JsonApiData<E>["attributes"]>Object.fromEntries(
+                        retainedAttributes.map(a => [a, datum[a]])
+                    ),
+                    id: datum.id,
+                    relationships: {
+                        ...multiRelationships,
+                        ...singleRelationships,
+                    },
+                    type: datum.type,
+                }
+                if(firstRun) {
+                    data.push(datumOut)
+                } else {
+                    included.push(datumOut)
+                }
+            }
+            if(firstRun) {
+                firstRun = false
+            }
+        }
+        return {
+            data: data,
+            included,
+        }
+    }
+
+    /**
+     *
+     * @param id
+     * @param data
+     * @throws FIXME if the user has no access
+     */
+    abstract update(id: I, data: Partial<E>): boolean
+
+    /**
+     *
+     * @param type
+     * @param id
+     * @returns
+     */
+    abstract userHasAccess(type: "read" | "write", id: I)
+}
