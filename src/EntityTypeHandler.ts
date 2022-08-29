@@ -221,7 +221,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                         case FetchedRelationFormat.FullWithType: {
                             const vi = v as RelationFullNoType
                             if(seenByType.addOnce(vi.type, vi.id)) {
-                                dataToProcess.push({...vi, type})
+                                dataToProcess.push(vi)
                             }
                             singleRelationships[field] = {data: {id: vi.id, type: vi.types}}
                             break
