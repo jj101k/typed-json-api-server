@@ -221,20 +221,25 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                             singleRelationships[field] = {data: {id: vi.id, type: vi.types}}
                             break
                         }
-                        case FetchedRelationFormat.IdOnly:
+                        case FetchedRelationFormat.IdOnly: {
+                            const vi = v as RelationIdOnly
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
-                            //
+                            singleRelationships[field] = {data: {id: vi.id, type: ft.types[0]}}
                             break
-                        case FetchedRelationFormat.IdType:
-                            //
+                        }
+                        case FetchedRelationFormat.IdType: {
+                            const vi = v as RelationIdType
+                            singleRelationships[field] = {data: {id: vi.id, type: vi.type}}
                             break
+                        }
                         case FetchedRelationFormat.RawId:
+                            const vi = v as string | number
                             if(ft.types.length != 1) {
                                 throw new Error(`No singular type for autodetection on relation ${field}`)
                             }
-                            //
+                            singleRelationships[field] = {data: {id: "" + vi, type: ft.types[0]}}
                             break
                     }
                 }
