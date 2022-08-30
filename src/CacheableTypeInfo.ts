@@ -1,9 +1,9 @@
 import { CacheableData } from "./CacheableData"
-import { FetchedRelationFormat } from "./FetchedRelationFormat"
 import { FetchedTypeInfo } from "./FetchedTypeInfo"
 import { Schema } from "./Schema"
 import { SchemaFactory } from "./SchemaFactory"
 import { Relation } from "./Relation"
+import { RelationFormatter, RelationFormatterFullNoType, RelationFormatterFullWithType, RelationFormatterIdOnly, RelationFormatterIdType, RelationFormatterRawId } from "./RelationFormatter"
 
 /**
  *
@@ -12,24 +12,25 @@ export class CacheableTypeInfo extends CacheableData<FetchedTypeInfo, { type: st
     /**
      *
      * @param relation
+     * @param types
      * @returns
      */
-    private autodetectFormat(relation: Relation) {
-        if (typeof relation == "number") {
-            return FetchedRelationFormat.RawId
+    private autodetectFormat(relation: Relation, types: string[]) {
+        if ((typeof relation == "number") || (typeof relation == "string")) {
+            return new RelationFormatterRawId(types)
         } else {
             if (!("id" in relation)) {
                 throw new Error("Unknown relation format")
             }
             const keys = Object.keys(relation)
             if (keys.length == 1) {
-                return FetchedRelationFormat.IdOnly
+                return new RelationFormatterIdOnly(types)
             } else if (!("type" in relation)) {
-                return FetchedRelationFormat.FullNoType
+                return new RelationFormatterFullNoType(types)
             } else if (keys.length == 2) {
-                return FetchedRelationFormat.IdType // Technically this could be full objects, but you shouldn't have those.
+                return new RelationFormatterIdType(types) // Technically this could be full objects, but you shouldn't have those.
             } else {
-                return FetchedRelationFormat.FullWithType
+                return new RelationFormatterFullWithType(types)
             }
         }
     }
@@ -40,33 +41,33 @@ export class CacheableTypeInfo extends CacheableData<FetchedTypeInfo, { type: st
      * @returns
      */
     private autodetectFormats<T extends { id: any}  = any>(datum: Partial<T>, schema: Schema<T>) {
-        const singleFormats: Record<string, { format: FetchedRelationFormat | null; types: string[]} > = {}
-        const manyFormats: Record<string, { format: FetchedRelationFormat | null; types: string[]} > = {}
+        const singleFormats: Record<string, RelationFormatter<any> | string[] > = {}
+        const manyFormats: Record<string, RelationFormatter<any> | string[] > = {}
         for (const [field, types] of Object.entries(schema.relationshipSchema.many ?? {})) {
             if (field in datum) {
                 const d: Relation[] = datum[field]
-                manyFormats[field] = {
-                    types,
-                    format: d.length ? this.autodetectFormat(d[0]) : null,
+                if(d.length) {
+                    manyFormats[field] = this.autodetectFormat(d[0], types)
+                } else {
+                    manyFormats[field] = types
                 }
             }
         }
         for (const [field, types] of Object.entries(schema.relationshipSchema.singleRequired ?? {})) {
             if (field in datum) {
                 const d: Relation = datum[field]
-                singleFormats[field] = {
-                    types,
-                    format: this.autodetectFormat(d),
-                }
+                singleFormats[field] = this.autodetectFormat(d, types)
             }
         }
         for (const [field, types] of Object.entries(schema.relationshipSchema.singleRequired ?? {})) {
             if (field in datum) {
                 const d: Relation = datum[field]
-                singleFormats[field] = {
-                    types,
-                    format: d !== null ? this.autodetectFormat(d) : null,
+                if(d !== null) {
+                    singleFormats[field] = this.autodetectFormat(d, types)
+                } else {
+                    singleFormats[field] = types
                 }
+
             }
         }
         return { single: singleFormats, many: manyFormats }
@@ -105,7 +106,11 @@ export class CacheableTypeInfo extends CacheableData<FetchedTypeInfo, { type: st
      */
     redetectFormat(datum: { type: string} , section: "many" | "single", field: string, relation: Relation) {
         const v = this.cache.get(this.key(datum))!
-        v.relationFormats[section][field].format = this.autodetectFormat(relation)
-        return v.relationFormats[section][field].format
+        const types = v.relationFormats[section][field]
+        if(!Array.isArray(types)) {
+            throw new Error(`Wrong type for types list: ${types}`)
+        }
+        v.relationFormats[section][field] = this.autodetectFormat(relation, types)
+        return v.relationFormats[section][field]
     }
 }

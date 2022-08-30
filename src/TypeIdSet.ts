@@ -30,7 +30,7 @@ export class TypeIdSet {
      *
      * @param type
      * @param id
-     * @returns
+     * @returns True if it added anything
      */
     addOnce(type: string, id: string) {
         if(this.has(type, id)) {
