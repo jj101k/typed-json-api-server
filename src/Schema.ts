@@ -19,30 +19,56 @@ export abstract class Schema<
     /**
      *
      */
-    private attributeNames: Array<A>
+    private readonly cache: {
+        attributeNames?: Array<A>
+        multiRelationshipNames?: Array<M>
+        singleRelationshipNames?: Array<S>
+    } = { }
+
     /**
      *
      */
-    private multiRelationshipNames: Array<M>
+    public abstract attributeSchema: AttributeSchema<A>
+
     /**
      *
      */
-    private singleRelationshipNames: Array<S>
+    public abstract relationshipSchema: RelationshipSchema<S, M>
+
     /**
      *
-     * @param attributeSchema
-     * @param relationshipSchema
      */
-    constructor(public attributeSchema: AttributeSchema<A>, public relationshipSchema: RelationshipSchema<S, M>) {
-        this.attributeNames = [
-            ...Object.keys(this.attributeSchema.notNullable ?? {}),
-            ...Object.keys(this.attributeSchema.nullable ?? {}),
-        ] as Array<A>
-        this.singleRelationshipNames = [
-            ...Object.keys(this.relationshipSchema.single ?? {}),
-            ...Object.keys(this.relationshipSchema.singleRequired ?? {}),
-        ] as Array<S>
-        this.multiRelationshipNames = Object.keys(this.relationshipSchema.many ?? {}) as Array<M>
+    private get attributeNames() {
+        if(!this.cache.attributeNames) {
+            this.cache.attributeNames = [
+                ...Object.keys(this.attributeSchema.notNullable ?? {}),
+                ...Object.keys(this.attributeSchema.nullable ?? {}),
+            ] as Array<A>
+        }
+        return this.cache.attributeNames
+    }
+
+    /**
+     *
+     */
+    private get multiRelationshipNames() {
+        if(!this.cache.multiRelationshipNames) {
+            this.cache.multiRelationshipNames = Object.keys(this.relationshipSchema.many ?? {}) as Array<M>
+        }
+        return this.cache.multiRelationshipNames
+    }
+
+    /**
+     *
+     */
+    private get singleRelationshipNames() {
+        if(!this.cache.singleRelationshipNames) {
+            this.cache.singleRelationshipNames = [
+                ...Object.keys(this.relationshipSchema.single ?? {}),
+                ...Object.keys(this.relationshipSchema.singleRequired ?? {}),
+            ] as Array<S>
+        }
+        return this.cache.singleRelationshipNames
     }
 
     /**
