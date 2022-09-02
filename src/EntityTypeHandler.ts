@@ -8,6 +8,9 @@ import { SchemaFactory } from "./SchemaFactory"
 import { TypeIdSet } from "./TypeIdSet"
 
 /**
+ * This is the main class for handling entities. This doesn't handle
+ * requests/responses, but does include some of the conversion between formats.
+ *
  * You _might_ want to do this without an ORM system. That's because really this
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
@@ -96,6 +99,10 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
     abstract getOne(id: I, include?: string[]): {data: Partial<E>, included?: any[]} | null
 
     /**
+     * Handles data after it's come out of getOne() or getMany().
+     *
+     * This takes an iterable set of the entity which may have deep
+     * relationships. It returns the bulk of a JSON:API response.
      *
      * @param dataInitial
      * @param length
