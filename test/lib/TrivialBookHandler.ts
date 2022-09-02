@@ -9,10 +9,12 @@ class Author {
 
 class Book {
     id: string
+    name: string
     author: Author
+    forewordAuthor: Author | null
 }
 
-class BookSchema extends Schema<Book, never, "author", never> {
+class BookSchema extends Schema<Book, "name", "author" | "forewordAuthor", never> {
     objectType(relationship: string): string {
         if(relationship == "author") {
             return "author"
@@ -31,9 +33,9 @@ class AuthorSchema extends Schema<Author, "name", never, never> {
 class BookSchemaFactory implements SchemaFactory {
     getSchema(type: string): Schema<any, any, any, any> {
         if(type == "book") {
-            return new BookSchema({notNullable: {}, nullable: {}}, {singleRequired: {author: ["author"]}})
+            return new BookSchema({notNullable: {name: "string"}, nullable: {}}, {singleRequired: {author: ["author"]}, single: {forewordAuthor: ["author"]}})
         } else if(type == "author") {
-            return new AuthorSchema({notNullable: {name: "string"}, nullable: {}}, {})
+            return new AuthorSchema({notNullable: {name: "string"}, nullable: {}}, {many: {books: ["book"]}})
         } else {
             throw new Error(`Type ${type} not known`)
         }

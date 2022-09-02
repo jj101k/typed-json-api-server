@@ -143,18 +143,15 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                 }
                 seenByType.add(datum.type, datum.id)
 
-                const {relationFormats: formats, retainedAttributes} = infoForType.get(datum)
+                const info = infoForType.get(datum)
 
                 const singleRelationships: {[r: string]: {data: RelationIdType | null}} = {}
                 const multiRelationships: {[r: string]: {data: RelationIdType[]}} = {}
-                for(const [field, ft] of Object.entries(formats.many)) {
+                for(const [field, ft] of Object.entries(info.relations.many)) {
                     const v: Relation[] = datum[field]
                     if(v.length == 0) {
                         multiRelationships[field] = {data: []}
                         continue
-                    }
-                    if(Array.isArray(ft)) {
-                        infoForType.redetectFormat(datum, "many", field, v[0])
                     }
                     const formatter = ft as RelationFormatter<any>
                     const items = v.map(vi => formatter.format(vi))
@@ -163,15 +160,15 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                     }
                     multiRelationships[field] = {data: items.map(item => ({id: item.id, type: item.type}))}
                 }
-                for(const [field, ft] of Object.entries(formats.single)) {
+                for(const field of Object.keys(info.relations.manyUnknown)) {
+                    multiRelationships[field] = {data: []}
+                }
+                for(const [field, ft] of Object.entries(info.relations.single)) {
                     if(datum[field] === null) {
                         singleRelationships[field] = {data: null}
                         continue
                     }
                     const v: Relation = datum[field]
-                    if(Array.isArray(ft)) {
-                        infoForType.redetectFormat(datum, "many", field, v[0])
-                    }
                     const formatter = ft as RelationFormatter<any>
                     const item = formatter.format(v)
                     if(formatter.hasData && seenByType.addOnce(item.type, item.id)) {
@@ -179,9 +176,12 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                     }
                     singleRelationships[field] = {data: {id: item.id, type: item.type}}
                 }
+                for(const field of Object.keys(info.relations.singleUnknown)) {
+                    singleRelationships[field] = {data: null}
+                }
                 const datumOut: JsonApiData<any> = {
                     attributes: <JsonApiData<E>["attributes"]>Object.fromEntries(
-                        retainedAttributes.map(a => [a, datum[a]])
+                        info.retainedAttributes.map(a => [a, datum[a]])
                     ),
                     id: datum.id,
                     relationships: {

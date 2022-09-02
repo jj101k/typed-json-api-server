@@ -3,8 +3,8 @@ import { JsonApiData } from "./JsonApiResponse"
 
 interface RelationshipSchema<S extends string, M extends string> {
     many?: Record<M, string[]>
-    single?: Record<S, string[]>
-    singleRequired?: Record<S, string[]>
+    single?: Partial<Record<S, string[]>>
+    singleRequired?: Partial<Record<S, string[]>>
 }
 
 /**
