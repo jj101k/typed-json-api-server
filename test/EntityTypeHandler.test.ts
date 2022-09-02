@@ -12,14 +12,14 @@ describe("Entity Type handling", () => {
                 name: "D Adams",
             },
         }))
-        it("can handle a big JOINed response", () => {
+        it("can handle a big response", () => {
             const response = handler.postProcess(bigResponse, 1000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
             expect(response.included[0].attributes).to.haveOwnProperty("name").eq("D Adams")
         })
-        it("can handle a big JOINed response (iterated)", () => {
+        it("can handle a big response (iterated)", () => {
             function *responseIterator(count: number) {
                 for(let i = 0; i < count; i++) {
                     yield {
@@ -105,13 +105,13 @@ describe("Entity Type handling", () => {
             id: "" + (i + 1),
             author: 42,
         }))
-        it("can handle a big unJOINed response (object)", () => {
+        it("can handle a big response (object)", () => {
             const response = handler.postProcess(bigResponseObject, 1000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(0)
         })
-        it("can handle a big unJOINed response (number)", () => {
+        it("can handle a big response (number)", () => {
             const response = handler.postProcess(bigResponseNumber, 1000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
