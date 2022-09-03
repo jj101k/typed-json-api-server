@@ -1,4 +1,4 @@
-import { EntityTypeHandler } from "../../src/EntityTypeHandler"
+import { EntityTypeHandler } from "../../../src/EntityTypeHandler"
 
 /**
  *

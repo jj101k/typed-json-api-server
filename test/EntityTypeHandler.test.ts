@@ -1,7 +1,7 @@
 import { expect } from "chai"
-import { TrivialAuthorHandler } from "./lib/TrivialAuthorHandler"
-import { TrivialBookHandler } from "./lib/TrivialBookHandler"
-import { TrivialPersonHandler } from "./lib/TrivialPersonHandler"
+import { TrivialAuthorHandler } from "./lib/TestHandler/TrivialAuthorHandler"
+import { TrivialBookHandler } from "./lib/TestHandler/TrivialBookHandler"
+import { TrivialPersonHandler } from "./lib/TestHandler/TrivialPersonHandler"
 
 describe("Entity Type handling", () => {
     const authorHandler = new TrivialAuthorHandler()
