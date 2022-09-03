@@ -1,14 +1,8 @@
-import { AttributeSchema } from "../../src/AttributeSchema"
-import { Schema } from "../../src/Schema"
+import { TestSchemaFactory } from "./TestSchemaFactory"
+import { TrivialFakeHandler } from "./TrivialFakeHandler"
+import { Person, PersonSchema } from "./Person"
 
-export class Person {
-    id: string
-    name: string
-    bestFriend: Person | null
-}
-
-export class PersonSchema extends Schema<Person, "name", "bestFriend", never> {
-    public attributeSchema: AttributeSchema<"name"> = {notNullable: {name: "string"}, nullable: {}}
-    public relationshipSchema = {single: {bestFriend: ["person"]}}
-    public readonly type: string = "person"
+export class TrivialPersonHandler extends TrivialFakeHandler<string, Person> {
+    protected schema = PersonSchema
+    protected schemaFactory = new TestSchemaFactory()
 }

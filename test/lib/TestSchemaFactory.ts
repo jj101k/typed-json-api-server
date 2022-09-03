@@ -1,17 +1,18 @@
 import { Schema } from "../../src/Schema"
 import { SchemaFactory } from "../../src/SchemaFactory"
-import { BookSchema, AuthorSchema } from "./Book"
-import { PersonSchema } from "./TrivialPersonHandler"
+import { AuthorSchema } from "./AuthorSchema"
+import { BookSchema } from "./BookSchema"
+import { PersonSchema } from "./Person"
 
 
 export class TestSchemaFactory implements SchemaFactory {
     getSchema(type: string): Schema<any, any, any, any> {
         if (type == "book") {
-            return new BookSchema()
+            return BookSchema
         } else if (type == "author") {
-            return new AuthorSchema()
+            return AuthorSchema
         } else if(type == "person") {
-            return new PersonSchema()
+            return PersonSchema
          } else {
             throw new Error(`Type ${type} not known`)
         }

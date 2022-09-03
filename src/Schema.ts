@@ -1,15 +1,15 @@
 import { AttributeSchema } from "./AttributeSchema"
 
 interface RelationshipSchema<S extends string, M extends string> {
-    many?: Record<M, string[]>
-    single?: Partial<Record<S, string[]>>
-    singleRequired?: Partial<Record<S, string[]>>
+    many?: Record<M, Array<Schema<any>>>
+    single?: Partial<Record<S, Array<Schema<any>>>>
+    singleRequired?: Partial<Record<S, Array<Schema<any>>>>
 }
 
 /**
  *
  */
-export abstract class Schema<
+export interface Schema<
     T extends {id: any} & Record<A, string | number | null> & Record<S, {id: any} | null> & Record<M, {id: any}[]>,
     A extends string | never = string,
     S extends string | never = string,
@@ -18,15 +18,15 @@ export abstract class Schema<
     /**
      *
      */
-    public abstract attributeSchema: AttributeSchema<A>
+    attributeSchema: AttributeSchema<A>
 
     /**
      *
      */
-    public abstract relationshipSchema: RelationshipSchema<S, M>
+    relationshipSchema: RelationshipSchema<S, M>
 
     /**
      *
      */
-    public abstract readonly type: string
+    readonly type: string
 }

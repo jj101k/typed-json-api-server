@@ -7,28 +7,28 @@ import { Schema } from "./Schema"
  */
 
 export class FetchedRelationsInfo {
-       /**
+    /**
      *
      * @param relation
-     * @param types
+     * @param schemata
      * @returns
      */
-    static autodetectFormat(relation: Relation, types: string[]): RelationFormatter<any> {
+    static autodetectFormat(relation: Relation, schemata: Array<Schema<any>>): RelationFormatter<any> {
         if ((typeof relation == "number") || (typeof relation == "string")) {
-            return new RelationFormatterRawId(types)
+            return new RelationFormatterRawId(schemata)
         } else {
             if (!("id" in relation)) {
                 throw new Error("Unknown relation format")
             }
             const keys = Object.keys(relation)
             if (keys.length == 1) {
-                return new RelationFormatterIdOnly(types)
+                return new RelationFormatterIdOnly(schemata)
             } else if (!("type" in relation)) {
-                return new RelationFormatterFullNoType(types)
+                return new RelationFormatterFullNoType(schemata)
             } else if (keys.length == 2) {
-                return new RelationFormatterIdType(types) // Technically this could be full objects, but you shouldn't have those.
+                return new RelationFormatterIdType(schemata) // Technically this could be full objects, but you shouldn't have those.
             } else {
-                return new RelationFormatterFullWithType(types)
+                return new RelationFormatterFullWithType(schemata)
             }
         }
     }
@@ -40,9 +40,9 @@ export class FetchedRelationsInfo {
      */
     static build<T extends { id: any}  = any>(datum: Partial<T>, schema: Schema<T>): FetchedRelationsInfo {
         const manyKnown: Record<string, RelationFormatter<any>> = {}
-        const manyUnknown: Record<string, string[]> = {}
+        const manyUnknown: Record<string, Array<Schema<any>>> = {}
         const singleKnown: Record<string, RelationFormatter<any>> = {}
-        const singleUnknown: Record<string, string[]> = {}
+        const singleUnknown: Record<string, Array<Schema<any>>> = {}
         for (const [field, types] of Object.entries(schema.relationshipSchema.many ?? {})) {
             if (field in datum) {
                 const d: Relation[] = datum[field]
@@ -86,8 +86,8 @@ export class FetchedRelationsInfo {
      */
     constructor(public many: Record<string, RelationFormatter<any>>,
         public single: Record<string, RelationFormatter<any>>,
-        public manyUnknown: Record<string, string[]> = {},
-        public singleUnknown: Record<string, string[]> = {}
+        public manyUnknown: Record<string, Array<Schema<any>>> = {},
+        public singleUnknown: Record<string, Array<Schema<any>>> = {}
     ) {
         this.isIncomplete = !!(Object.keys(this.manyUnknown).length || Object.keys(this.singleUnknown).length)
     }

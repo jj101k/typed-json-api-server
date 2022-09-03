@@ -5,7 +5,7 @@
  * order, except that it's wise to stay as far as possible from
  * self-referential loops.
  */
-export abstract class OrderedMapArray<T> {
+export abstract class OrderedMapArray<T, K> {
     /**
      *
      */
@@ -14,13 +14,13 @@ export abstract class OrderedMapArray<T> {
     /**
      *
      */
-    private keys: string[] = []
+    private keys: K[] = []
 
     /**
      *
-     * @param item
+     * @param key
      */
-    protected abstract getKey(item: T): string
+    protected abstract getMapKey(key: K): string
 
     /**
      * This throws out all items which don't match the predicate
@@ -29,7 +29,8 @@ export abstract class OrderedMapArray<T> {
      */
     keepOnly(predicate: (t: T) => boolean): void {
         for(const key of this.keys) {
-            this.keyItems.set(key, this.keyItems.get(key)!.filter(predicate))
+            const mapKey = this.getMapKey(key)
+            this.keyItems.set(mapKey, this.keyItems.get(mapKey)!.filter(predicate))
         }
     }
 
@@ -41,24 +42,26 @@ export abstract class OrderedMapArray<T> {
         const key = this.keys.shift()
         if (key === undefined)
             return undefined
-        const items = this.keyItems.get(key)!
-        this.keyItems.delete(key)
+        const mapKey = this.getMapKey(key)
+        const items = this.keyItems.get(mapKey)!
+        this.keyItems.delete(mapKey)
         return items
     }
+
     /**
+     * @param key
      * @param items
      */
-    push(...items: Array<T>) {
+    protected pushInternal(key: K, items: Array<T>) {
         if (!items.length)
             return
-        const item0 = items[0]
-        const key = this.getKey(item0)
-        const storeItems = this.keyItems.get(key)
+        const mapKey = this.getMapKey(key)
+        const storeItems = this.keyItems.get(mapKey)
         if (storeItems) {
             storeItems.push(...items)
         } else {
             this.keys.push(key)
-            this.keyItems.set(key, items)
+            this.keyItems.set(mapKey, items)
         }
     }
 }

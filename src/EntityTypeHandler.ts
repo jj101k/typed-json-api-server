@@ -170,7 +170,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                     const formatter = ft as RelationFormatter<any>
                     const items = v.map(vi => formatter.format(vi))
                     if(formatter.hasData) {
-                        dataToProcess.push(...items.filter(item => includeSeenByType.addOnce(item.type, item.id)))
+                        dataToProcess.push(ft.schemata, ...items.filter(item => includeSeenByType.addOnce(item.type, item.id)))
                     }
                     multiRelationships[field] = {data: items.map(item => ({id: item.id, type: item.type}))}
                 }
@@ -191,7 +191,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                     const formatter = ft as RelationFormatter<any>
                     const item = formatter.format(v)
                     if(formatter.hasData && includeSeenByType.addOnce(item.type, item.id)) {
-                        dataToProcess.push(item)
+                        dataToProcess.push(ft.schemata, item)
                     }
                     singleRelationships[field] = {data: {id: item.id, type: item.type}}
                 }

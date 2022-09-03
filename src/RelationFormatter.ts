@@ -1,3 +1,5 @@
+import { Schema } from "./Schema"
+
 /**
  *
  */
@@ -9,9 +11,9 @@ export abstract class RelationFormatter<T> {
 
     /**
      *
-     * @param types
+     * @param schemata
      */
-    constructor(public types: string[]) {
+    constructor(public schemata: Array<Schema<any>>) {
 
     }
 
@@ -29,18 +31,18 @@ export abstract class RelationFormatterNoType<T> extends RelationFormatter<T> {
     /**
      *
      */
-    protected readonly type: string
+    protected readonly schema: Schema<any>
 
     /**
      *
      * @param types
      */
-    constructor(types: string[]) {
+    constructor(types: Array<Schema<any>>) {
         super(types)
         if(types.length != 1) {
             throw new Error(`Cannot use typeless formatter with types.size!=1: ${types}`)
         }
-        this.type = types[0]
+        this.schema = types[0]
     }
 }
 
@@ -49,7 +51,7 @@ export abstract class RelationFormatterNoType<T> extends RelationFormatter<T> {
  */
 abstract class RelationFormatterAnyNoType<T extends {id: string}> extends RelationFormatterNoType<T> {
     format(relation: T): { id: string; type: string } {
-        return {...relation, type: this.type}
+        return {...relation, type: this.schema.type}
     }
 }
 
@@ -97,6 +99,6 @@ export class RelationFormatterRawId extends RelationFormatterNoType<string | num
     readonly hasData = false
 
     format(relation: string | number): { id: string; type: string } {
-        return {id: "" + relation, type: this.type}
+        return {id: "" + relation, type: this.schema.type}
     }
 }
