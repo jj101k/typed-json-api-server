@@ -1,6 +1,6 @@
 import { CacheableTypeInfo } from "./CacheableTypeInfo"
 import { JsonApiData } from "./JsonApiResponse"
-import { OrderedMapArray } from "./OrderedMapArray"
+import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
 import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
 import { Schema } from "./Schema"
@@ -119,7 +119,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
         let included: JsonApiData<any>[] = []
         let firstRun = true
 
-        const dataToProcess = new OrderedMapArray()
+        const dataToProcess = new OrderedTypeMapArray()
 
         const seenByType = new TypeIdSet()
 

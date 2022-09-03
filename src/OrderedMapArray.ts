@@ -5,15 +5,22 @@
  * order, except that it's wise to stay as far as possible from
  * self-referential loops.
  */
-export class OrderedMapArray<T extends { type: string}  = any & { type: string} > {
+export abstract class OrderedMapArray<T> {
     /**
      *
      */
-    private typeItems = new Map<string, T[]>()
+    private keyItems = new Map<string, T[]>()
+
     /**
      *
      */
-    private types: string[] = []
+    private keys: string[] = []
+
+    /**
+     *
+     * @param item
+     */
+    protected abstract getKey(item: T): string
 
     /**
      * This throws out all items which don't match the predicate
@@ -21,8 +28,8 @@ export class OrderedMapArray<T extends { type: string}  = any & { type: string} 
      * @param predicate
      */
     keepOnly(predicate: (t: T) => boolean): void {
-        for(const type of this.types) {
-            this.typeItems.set(type, this.typeItems.get(type)!.filter(predicate))
+        for(const key of this.keys) {
+            this.keyItems.set(key, this.keyItems.get(key)!.filter(predicate))
         }
     }
 
@@ -31,11 +38,11 @@ export class OrderedMapArray<T extends { type: string}  = any & { type: string} 
      * @returns
      */
     shift() {
-        const type = this.types.shift()
-        if (type === undefined)
+        const key = this.keys.shift()
+        if (key === undefined)
             return undefined
-        const items = this.typeItems.get(type)!
-        this.typeItems.delete(type)
+        const items = this.keyItems.get(key)!
+        this.keyItems.delete(key)
         return items
     }
     /**
@@ -45,12 +52,13 @@ export class OrderedMapArray<T extends { type: string}  = any & { type: string} 
         if (!items.length)
             return
         const item0 = items[0]
-        const storeItems = this.typeItems.get(item0.type)
+        const key = this.getKey(item0)
+        const storeItems = this.keyItems.get(key)
         if (storeItems) {
             storeItems.push(...items)
         } else {
-            this.types.push(item0.type)
-            this.typeItems.set(item0.type, items)
+            this.keys.push(key)
+            this.keyItems.set(key, items)
         }
     }
 }
