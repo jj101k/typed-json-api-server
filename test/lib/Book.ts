@@ -1,6 +1,5 @@
 import { AttributeSchema } from "../../src/AttributeSchema"
 import { Schema } from "../../src/Schema"
-import { SchemaFactory } from "../../src/SchemaFactory"
 
 export class Author {
     id: string
@@ -24,16 +23,4 @@ export class AuthorSchema extends Schema<Author, "name", never, never> {
     public attributeSchema: AttributeSchema<"name"> = {notNullable: {name: "string"}, nullable: {}}
     public relationshipSchema = {many: {books: ["book"]}}
     public readonly type: string = "author"
-}
-
-export class BookSchemaFactory implements SchemaFactory {
-    getSchema(type: string): Schema<any, any, any, any> {
-        if(type == "book") {
-            return new BookSchema()
-        } else if(type == "author") {
-            return new AuthorSchema()
-        } else {
-            throw new Error(`Type ${type} not known`)
-        }
-    }
 }
