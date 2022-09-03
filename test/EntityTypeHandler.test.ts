@@ -1,8 +1,10 @@
 import { expect } from "chai"
+import { TrivialAuthorHandler } from "./lib/TrivialAuthorHandler"
 import { TrivialBookHandler } from "./lib/TrivialBookHandler"
 import { TrivialPersonHandler } from "./lib/TrivialPersonHandler"
 
 describe("Entity Type handling", () => {
+    const authorHandler = new TrivialAuthorHandler()
     const bookHandler = new TrivialBookHandler()
     describe("JOINed", () => {
         const bigResponse = [...new Array(1000)].map((_, i) => ({
@@ -14,7 +16,7 @@ describe("Entity Type handling", () => {
             },
         }))
         it("can handle a big response", () => {
-            const response = bookHandler.postProcess(bigResponse, 1000, "book")
+            const response = bookHandler.postProcess(bigResponse, 1000)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
@@ -32,7 +34,7 @@ describe("Entity Type handling", () => {
                     }
                 }
             }
-            const response = bookHandler.postProcess(responseIterator(10000), 10000, "book")
+            const response = bookHandler.postProcess(responseIterator(10000), 10000)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(10000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
@@ -56,7 +58,7 @@ describe("Entity Type handling", () => {
                     ],
                 }
             ]
-            const response = bookHandler.postProcess(responseData, 2, "author")
+            const response = authorHandler.postProcess(responseData, 2)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(0)
             expect(response.data[1].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(1)
@@ -87,7 +89,7 @@ describe("Entity Type handling", () => {
                     },
                 }
             ]
-            const response = bookHandler.postProcess(responseData, 2, "book")
+            const response = bookHandler.postProcess(responseData, 2)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").is.null
             expect(response.data[1].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").haveOwnProperty("id").eq("43")
@@ -130,7 +132,7 @@ describe("Entity Type handling", () => {
                     }
                 }
             ]
-            const response = personHandler.postProcess(responseData, 2, "person")
+            const response = personHandler.postProcess(responseData, 2)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(3)
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
             expect(response.included[0].attributes).to.haveOwnProperty("name").eq("George")
@@ -148,13 +150,13 @@ describe("Entity Type handling", () => {
             author: 42,
         }))
         it("can handle a big response (object)", () => {
-            const response = bookHandler.postProcess(bigResponseObject, 1000, "book")
+            const response = bookHandler.postProcess(bigResponseObject, 1000)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(0)
         })
         it("can handle a big response (number)", () => {
-            const response = bookHandler.postProcess(bigResponseNumber, 1000, "book")
+            const response = bookHandler.postProcess(bigResponseNumber, 1000)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(0)
@@ -174,7 +176,7 @@ describe("Entity Type handling", () => {
                     ],
                 }
             ]
-            const response = bookHandler.postProcess(responseData, 2, "author")
+            const response = authorHandler.postProcess(responseData, 2)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(0)
             expect(response.data[1].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(1)
@@ -195,7 +197,7 @@ describe("Entity Type handling", () => {
                     forewordAuthor: 43,
                 }
             ]
-            const response = bookHandler.postProcess(responseData, 2, "book")
+            const response = bookHandler.postProcess(responseData, 2)
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").is.null
             expect(response.data[1].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").haveOwnProperty("id").eq("43")

@@ -24,4 +24,9 @@ export abstract class Schema<
      *
      */
     public abstract relationshipSchema: RelationshipSchema<S, M>
+
+    /**
+     *
+     */
+    public abstract readonly type: string
 }

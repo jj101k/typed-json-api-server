@@ -2,6 +2,7 @@ import { AttributeSchema } from "../../src/AttributeSchema"
 import { EntityTypeHandler } from "../../src/EntityTypeHandler"
 import { Schema } from "../../src/Schema"
 import { SchemaFactory } from "../../src/SchemaFactory"
+import { TrivialFakeHandler } from "./TrivialFakeHandler"
 
 class Person {
     id: string
@@ -12,6 +13,7 @@ class Person {
 class PersonSchema extends Schema<Person, "name", "bestFriend", never> {
     public attributeSchema: AttributeSchema<"name"> = {notNullable: {name: "string"}, nullable: {}}
     public relationshipSchema = {single: {bestFriend: ["person"]}}
+    public readonly type: string = "person"
 }
 
 class PersonSchemaFactory implements SchemaFactory {
@@ -24,28 +26,7 @@ class PersonSchemaFactory implements SchemaFactory {
     }
 }
 
-export class TrivialPersonHandler extends EntityTypeHandler<string, Person> {
+export class TrivialPersonHandler extends TrivialFakeHandler<string, Person> {
     protected schema = new PersonSchema()
     protected schemaFactory = new PersonSchemaFactory()
-    create(id: string, data: Partial<Person>): boolean {
-        return false
-    }
-    delete(...ids: string[]) {
-        return false
-    }
-    getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[] | undefined): { data: Partial<{ id: string }>[]; included?: any[] | undefined; nextPage?: any } {
-        return {
-            data: [],
-        }
-    }
-    getOne(id: string, include?: string[] | undefined): { data: Partial<{ id: string }>; included?: any[] | undefined } | null {
-        return null
-    }
-    localRelations: Partial<Record<"id", { field: string; type: string }[]>> = {}
-    update(id: string, data: Partial<{ id: string }>): boolean {
-        return false
-    }
-    userHasAccess(type: "read" | "write", id: string) {
-        return true
-    }
 }

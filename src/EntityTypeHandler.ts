@@ -106,10 +106,9 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
      *
      * @param dataInitial
      * @param length
-     * @param type
      * @returns
      */
-    postProcess(dataInitial: Iterable<{id: string}>, length: number, type: string) {
+    postProcess(dataInitial: Iterable<{id: string}>, length: number) {
         if(!length) {
             return {
                 data: [] as JsonApiData<any>[],
@@ -134,7 +133,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
 
         let includeSeenByType: TypeIdSet
 
-        for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, type); dataSet; dataSet = dataToProcess.shift()) {
+        for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, this.schema.type); dataSet; dataSet = dataToProcess.shift()) {
             if(firstRun) {
                 includeSeenByType = new ShadowTypeIdSet(seenByType)
             }
