@@ -9,11 +9,23 @@ export class OrderedMapArray<T extends { type: string}  = any & { type: string} 
     /**
      *
      */
-    private typeItems = new Map<string, T[]>();
+    private typeItems = new Map<string, T[]>()
     /**
      *
      */
-    private types: string[] = [];
+    private types: string[] = []
+
+    /**
+     * This throws out all items which don't match the predicate
+     *
+     * @param predicate
+     */
+    keepOnly(predicate: (t: T) => boolean): void {
+        for(const type of this.types) {
+            this.typeItems.set(type, this.typeItems.get(type)!.filter(predicate))
+        }
+    }
+
     /**
      *
      * @returns

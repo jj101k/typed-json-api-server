@@ -11,7 +11,7 @@ export class TypeIdSet {
     /**
      *
      */
-    private readonly byType = new Map<string, Set<string>>();
+    protected readonly byType = new Map<string, Set<string>>();
 
     /**
      *
@@ -47,5 +47,17 @@ export class TypeIdSet {
      */
     has(type: string, id: string) {
         return this.byType.get(type)?.has(id)
+    }
+}
+
+/**
+ * This allows checking a "main" set for items which are not in this set.
+ */
+export class ShadowTypeIdSet extends TypeIdSet {
+    constructor(private parentSet: TypeIdSet) {
+        super()
+    }
+    has(type: string, id: string): boolean {
+        return this.parentSet.has(type, id) || super.has(type, id)
     }
 }

@@ -5,7 +5,7 @@ import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
 import { Schema } from "./Schema"
 import { SchemaFactory } from "./SchemaFactory"
-import { TypeIdSet } from "./TypeIdSet"
+import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
 
 /**
  * This is the main class for handling entities. This doesn't handle
@@ -117,7 +117,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
         }
 
         const data: JsonApiData<any>[] = []
-        const included: JsonApiData<any>[] = []
+        let included: JsonApiData<any>[] = []
         let firstRun = true
 
         const dataToProcess = new OrderedMapArray()
@@ -132,16 +132,22 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
 
         const infoForType = new CacheableTypeInfo(this.schemaFactory)
 
+        let includeSeenByType: TypeIdSet
+
         for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, type); dataSet; dataSet = dataToProcess.shift()) {
+            if(firstRun) {
+                includeSeenByType = new ShadowTypeIdSet(seenByType)
+            }
+
             for(const datum of dataSet) {
                 if(firstRun) {
-                    // This applies only to the first and second sets. After that
-                    // they'll be pre-excluded.
+                    // This applies only to the first set. After that they'll be
+                    // pre-excluded.
                     //
-                    // It might seem surprising that it applies to the _second_, but
-                    // in practice included entities can't trump data entities, and
-                    // that means we need to build the included list separately and
-                    // test it on the subsequent run.
+                    // For included entities seen in the first run which happen
+                    // to be the same type as the initial data set (ie, peer
+                    // relationships), they're dropped if they're already known
+                    // and otherwise retained until the end of the first run.
 
                     // First time we might have duplicates already in the list
                     if(seenByType.has(datum.type, datum.id)) {
@@ -155,36 +161,46 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                 const singleRelationships: {[r: string]: {data: RelationIdType | null}} = {}
                 const multiRelationships: {[r: string]: {data: RelationIdType[]}} = {}
                 for(const [field, ft] of Object.entries(info.relations.many)) {
-                    const v: Relation[] = datum[field]
-                    if(v.length == 0) {
+                    const v: Relation[] | undefined = datum[field]
+                    if(!v) {
+                        continue
+                    } else if(v.length == 0) {
                         multiRelationships[field] = {data: []}
                         continue
                     }
                     const formatter = ft as RelationFormatter<any>
                     const items = v.map(vi => formatter.format(vi))
                     if(formatter.hasData) {
-                        dataToProcess.push(...items.filter(item => seenByType.addOnce(item.type, item.id)))
+                        dataToProcess.push(...items.filter(item => includeSeenByType.addOnce(item.type, item.id)))
                     }
                     multiRelationships[field] = {data: items.map(item => ({id: item.id, type: item.type}))}
                 }
                 for(const field of Object.keys(info.relations.manyUnknown)) {
-                    multiRelationships[field] = {data: []}
+                    if(datum[field]) {
+                        // It must be empty, otherwise it'd have a format
+                        multiRelationships[field] = {data: []}
+                    }
                 }
                 for(const [field, ft] of Object.entries(info.relations.single)) {
-                    if(datum[field] === null) {
+                    if(datum[field] === undefined) {
+                        continue
+                    } else if(datum[field] === null) {
                         singleRelationships[field] = {data: null}
                         continue
                     }
                     const v: Relation = datum[field]
                     const formatter = ft as RelationFormatter<any>
                     const item = formatter.format(v)
-                    if(formatter.hasData && seenByType.addOnce(item.type, item.id)) {
+                    if(formatter.hasData && includeSeenByType.addOnce(item.type, item.id)) {
                         dataToProcess.push(item)
                     }
                     singleRelationships[field] = {data: {id: item.id, type: item.type}}
                 }
                 for(const field of Object.keys(info.relations.singleUnknown)) {
-                    singleRelationships[field] = {data: null}
+                    if(datum[field] !== undefined) {
+                        // It must be null, otherwise it'd have a format
+                        singleRelationships[field] = {data: null}
+                    }
                 }
                 const datumOut: JsonApiData<any> = {
                     attributes: <JsonApiData<E>["attributes"]>Object.fromEntries(
@@ -205,6 +221,8 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
             }
             if(firstRun) {
                 firstRun = false
+                dataToProcess.keepOnly(i => !seenByType.has(i.type, i.id))
+                includeSeenByType = seenByType
             }
         }
         return {

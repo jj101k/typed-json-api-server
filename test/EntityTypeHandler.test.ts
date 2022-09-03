@@ -1,8 +1,9 @@
 import { expect } from "chai"
 import { TrivialBookHandler } from "./lib/TrivialBookHandler"
+import { TrivialPersonHandler } from "./lib/TrivialPersonHandler"
 
 describe("Entity Type handling", () => {
-    const handler = new TrivialBookHandler()
+    const bookHandler = new TrivialBookHandler()
     describe("JOINed", () => {
         const bigResponse = [...new Array(1000)].map((_, i) => ({
             id: "" + (i + 1),
@@ -13,7 +14,7 @@ describe("Entity Type handling", () => {
             },
         }))
         it("can handle a big response", () => {
-            const response = handler.postProcess(bigResponse, 1000, "book")
+            const response = bookHandler.postProcess(bigResponse, 1000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
@@ -31,7 +32,7 @@ describe("Entity Type handling", () => {
                     }
                 }
             }
-            const response = handler.postProcess(responseIterator(10000), 10000, "book")
+            const response = bookHandler.postProcess(responseIterator(10000), 10000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(10000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
@@ -55,7 +56,7 @@ describe("Entity Type handling", () => {
                     ],
                 }
             ]
-            const response = handler.postProcess(responseData, 2, "author")
+            const response = bookHandler.postProcess(responseData, 2, "author")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(0)
             expect(response.data[1].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(1)
@@ -86,12 +87,53 @@ describe("Entity Type handling", () => {
                     },
                 }
             ]
-            const response = handler.postProcess(responseData, 2, "book")
+            const response = bookHandler.postProcess(responseData, 2, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").is.null
             expect(response.data[1].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").haveOwnProperty("id").eq("43")
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.included[1].attributes).to.haveOwnProperty("name").eq("T Pratchett")
+        })
+        it("can exclude peer links", () => {
+            const personHandler = new TrivialPersonHandler()
+            const responseData = [
+                {
+                    id: "1",
+                    name: "Doug",
+                    bestFriend: {
+                        id: "2",
+                        name: "Terry"
+                    },
+                },
+                {
+                    id: "2",
+                    name: "Terry",
+                    bestFriend: {
+                        id: "1",
+                        name: "Doug"
+                    },
+                },
+                {
+                    id: "3",
+                    name: "Timothy",
+                    bestFriend: {
+                        id: "77",
+                        name: "George"
+                    }
+                },
+                {
+                    id: "3",
+                    name: "Timothy",
+                    bestFriend: {
+                        id: "77",
+                        name: "George"
+                    }
+                }
+            ]
+            const response = personHandler.postProcess(responseData, 2, "person")
+            expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(3)
+            expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(1)
+            expect(response.included[0].attributes).to.haveOwnProperty("name").eq("George")
         })
     })
     describe("Unjoined", () => {
@@ -106,13 +148,13 @@ describe("Entity Type handling", () => {
             author: 42,
         }))
         it("can handle a big response (object)", () => {
-            const response = handler.postProcess(bigResponseObject, 1000, "book")
+            const response = bookHandler.postProcess(bigResponseObject, 1000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(0)
         })
         it("can handle a big response (number)", () => {
-            const response = handler.postProcess(bigResponseNumber, 1000, "book")
+            const response = bookHandler.postProcess(bigResponseNumber, 1000, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(1000)
             expect(response.data[0].relationships).to.haveOwnProperty("author").to.haveOwnProperty("data").which.deep.eq({type: "author", id: "42"})
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(0)
@@ -132,7 +174,7 @@ describe("Entity Type handling", () => {
                     ],
                 }
             ]
-            const response = handler.postProcess(responseData, 2, "author")
+            const response = bookHandler.postProcess(responseData, 2, "author")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(0)
             expect(response.data[1].relationships).to.haveOwnProperty("books").to.haveOwnProperty("data").to.haveOwnProperty("length").which.eq(1)
@@ -153,7 +195,7 @@ describe("Entity Type handling", () => {
                     forewordAuthor: 43,
                 }
             ]
-            const response = handler.postProcess(responseData, 2, "book")
+            const response = bookHandler.postProcess(responseData, 2, "book")
             expect(response).to.haveOwnProperty("data").which.is.instanceOf(Array).with.ownProperty("length").eq(2)
             expect(response.data[0].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").is.null
             expect(response.data[1].relationships).to.haveOwnProperty("forewordAuthor").to.haveOwnProperty("data").haveOwnProperty("id").eq("43")
