@@ -4,7 +4,6 @@ import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
 import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
 import { Schema } from "./Schema"
-import { SchemaFactory } from "./SchemaFactory"
 import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
 
 /**
@@ -19,11 +18,6 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
      *
      */
     protected abstract schema: Schema<any, any, any, any>
-
-    /**
-     *
-     */
-    protected abstract schemaFactory: SchemaFactory
 
     /**
      *
@@ -129,11 +123,13 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
             }
         }
 
-        const infoForType = new CacheableTypeInfo(this.schemaFactory)
+        const infoForType = new CacheableTypeInfo()
 
         let includeSeenByType: TypeIdSet
 
-        for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, this.schema.type); dataSet; dataSet = dataToProcess.shift()) {
+        let schema: Schema<any> = this.schema
+
+        for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, schema.type); dataSet; [schema, dataSet] = dataToProcess.shiftEntry()) {
             if(firstRun) {
                 includeSeenByType = new ShadowTypeIdSet(seenByType)
             }
@@ -155,7 +151,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                 }
                 seenByType.add(datum.type, datum.id)
 
-                const info = infoForType.get(datum)
+                const info = infoForType.get({schema, item: datum})
 
                 const singleRelationships: {[r: string]: {data: RelationIdType | null}} = {}
                 const multiRelationships: {[r: string]: {data: RelationIdType[]}} = {}

@@ -38,14 +38,14 @@ export abstract class OrderedMapArray<T, K> {
      *
      * @returns
      */
-    shift() {
+    shiftEntry(): [K | undefined, T[] | undefined] {
         const key = this.keys.shift()
         if (key === undefined)
-            return undefined
+            return [undefined, undefined]
         const mapKey = this.getMapKey(key)
         const items = this.keyItems.get(mapKey)!
         this.keyItems.delete(mapKey)
-        return items
+        return [key, items]
     }
 
     /**

@@ -1,33 +1,30 @@
 import { CacheableData } from "./CacheableData"
 import { FetchedTypeInfo } from "./FetchedTypeInfo"
 import { FetchedRelationsInfo } from "./FetchedRelationsInfo"
-import { SchemaFactory } from "./SchemaFactory"
+import { Schema } from "./Schema"
 
 /**
  *
  */
-export class CacheableTypeInfo extends CacheableData<FetchedTypeInfo, { type: string} > {
-    protected calculate(datum: { type: string} ) {
-        const schema = this.schemaFactory.getSchema(datum.type)
+type CacheableTypeIn = {schema: Schema<any>, item: any & {}}
+
+/**
+ *
+ */
+export class CacheableTypeInfo extends CacheableData<FetchedTypeInfo, CacheableTypeIn> {
+    protected calculate(datum: CacheableTypeIn) {
+        const relations = FetchedRelationsInfo.build(datum.item, datum.schema)
         const attributes = [
-            ...Object.keys(schema.attributeSchema.notNullable ?? {}),
-            ...Object.keys(schema.attributeSchema.nullable ?? {}),
+            ...Object.keys(datum.schema.attributeSchema.notNullable ?? {}),
+            ...Object.keys(datum.schema.attributeSchema.nullable ?? {}),
         ]
-        const relations = FetchedRelationsInfo.build(datum, schema)
-        const retainedAttributes = attributes.filter(a => datum[a] !== undefined)
+        const retainedAttributes = attributes.filter(a => datum.item[a] !== undefined)
 
         return { relations, retainedAttributes }
     }
 
-    protected key(u: { type: string} ): string {
-        return u.type
-    }
-
-    /**
-     *
-     */
-    constructor(private schemaFactory: SchemaFactory) {
-        super()
+    protected key(u: CacheableTypeIn): string {
+        return u.schema.type
     }
 
     /**
@@ -35,10 +32,10 @@ export class CacheableTypeInfo extends CacheableData<FetchedTypeInfo, { type: st
      * @param u
      * @returns
      */
-    get(u: { type: string }): FetchedTypeInfo {
+    get(u: CacheableTypeIn): FetchedTypeInfo {
         const fetchedTypeInfo = super.get(u)
         if(fetchedTypeInfo.relations.isIncomplete) {
-            fetchedTypeInfo.relations.autodetect(u)
+            fetchedTypeInfo.relations.autodetect(u.item)
         }
         return fetchedTypeInfo
     }
