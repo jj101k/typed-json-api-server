@@ -12,13 +12,6 @@ class Person {
 class PersonSchema extends Schema<Person, "name", "bestFriend", never> {
     public attributeSchema: AttributeSchema<"name"> = {notNullable: {name: "string"}, nullable: {}}
     public relationshipSchema = {single: {bestFriend: ["person"]}}
-    objectType(relationship: string): string {
-        if(relationship == "bestFriend") {
-            return "person"
-        } else {
-            throw new Error(`Unknown relationship: ${relationship}`)
-        }
-    }
 }
 
 class PersonSchemaFactory implements SchemaFactory {
