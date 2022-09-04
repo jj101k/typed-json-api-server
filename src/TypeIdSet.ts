@@ -7,18 +7,18 @@
  *
  * This doesn't feature deleting.
  */
-export class TypeIdSet {
+export class TypeIdSet<I extends string | number = string | number> {
     /**
      *
      */
-    protected readonly byType = new Map<string, Set<string>>();
+    protected readonly byType = new Map<string, Set<I>>();
 
     /**
      *
      * @param type
      * @param id
      */
-    add(type: string, id: string) {
+    add(type: string, id: I) {
         const ids = this.byType.get(type)
         if (ids) {
             ids.add(id)
@@ -32,7 +32,7 @@ export class TypeIdSet {
      * @param id
      * @returns True if it added anything
      */
-    addOnce(type: string, id: string) {
+    addOnce(type: string, id: I) {
         if(this.has(type, id)) {
             return false
         } else {
@@ -45,7 +45,7 @@ export class TypeIdSet {
      * @param type
      * @param id
      */
-    has(type: string, id: string) {
+    has(type: string, id: I) {
         return this.byType.get(type)?.has(id)
     }
 }

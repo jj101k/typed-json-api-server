@@ -3,7 +3,7 @@ import { EntityTypeHandler } from "../../../src/EntityTypeHandler"
 /**
  *
  */
-export abstract class TrivialFakeHandler<I, E extends {id: I}> extends EntityTypeHandler<I, E> {
+export abstract class TrivialFakeHandler<I extends string | number, E extends {id: I}> extends EntityTypeHandler<I, E> {
     create(id: I, data: Partial<E>): boolean {
         return false
     }

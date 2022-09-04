@@ -13,7 +13,17 @@ import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
  * You _might_ want to do this without an ORM system. That's because really this
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
-export abstract class EntityTypeHandler<I, E extends {id: I}> {
+export abstract class EntityTypeHandler<I extends string | number, E extends {id: I}> {
+    /**
+     *
+     * @param typeless
+     */
+    private *addType(typeless: Iterable<{id: I}>) {
+        for(const v of typeless) {
+            yield {...v, type: this.schema.type}
+        }
+    }
+
     /**
      *
      */
@@ -102,7 +112,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
      * @param length
      * @returns
      */
-    postProcess(dataInitial: Iterable<{id: string}>, length: number) {
+    postProcess(dataInitial: Iterable<{id: I}>, length: number) {
         if(!length) {
             return {
                 data: [] as JsonApiData<any>[],
@@ -117,19 +127,13 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
 
         const seenByType = new TypeIdSet()
 
-        function *addType(typeless: Iterable<{id: string}>, type: string) {
-            for(const v of typeless) {
-                yield {...v, type}
-            }
-        }
-
         const infoForType = new CacheableTypeInfo()
 
         let includeSeenByType: TypeIdSet
 
         let schema: Schema<any> = this.schema
 
-        for(let dataSet: Iterable<{id: string, type: string}> | undefined = addType(dataInitial, schema.type); dataSet; [schema, dataSet] = dataToProcess.shiftEntry()) {
+        for(let dataSet: Iterable<{id: string | number, type: string}> | undefined = this.addType(dataInitial); dataSet; [schema, dataSet] = dataToProcess.shiftEntry()) {
             if(firstRun) {
                 includeSeenByType = new ShadowTypeIdSet(seenByType)
             }
@@ -201,7 +205,7 @@ export abstract class EntityTypeHandler<I, E extends {id: I}> {
                     attributes: <JsonApiData<E>["attributes"]>Object.fromEntries(
                         info.retainedAttributes.map(a => [a, datum[a]])
                     ),
-                    id: datum.id,
+                    id: "" + datum.id,
                     relationships: {
                         ...multiRelationships,
                         ...singleRelationships,
