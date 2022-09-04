@@ -1,10 +1,10 @@
 import { Schema } from "../../../src/Schema"
-import { Person } from "../TestEntity/Person"
+import { Person, PersonAttributeKey, PersonSingleRelationKey } from "../TestEntity/Person"
 
 /**
  *
  */
-export const PersonSchema: Schema<Person, "name", "bestFriend", never> = {
+export const PersonSchema: Schema<Person, PersonAttributeKey, PersonSingleRelationKey, never> = {
     attributeSchema: {notNullable: {name: "string"}, nullable: {}},
     get relationshipSchema() {
         return {single: {bestFriend: [PersonSchema]}}

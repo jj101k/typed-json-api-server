@@ -1,3 +1,6 @@
+export type PersonAttributeKey = "name"
+export type PersonSingleRelationKey = "bestFriend"
+
 /**
  *
  */

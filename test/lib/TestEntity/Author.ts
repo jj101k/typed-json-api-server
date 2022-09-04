@@ -1,5 +1,8 @@
 import { Book } from "./Book"
 
+export type AuthorAttributeKey = "name"
+export type AuthorMultiRelationKey = "books"
+
 /**
  *
  */

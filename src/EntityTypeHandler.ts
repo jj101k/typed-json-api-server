@@ -13,7 +13,11 @@ import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
  * You _might_ want to do this without an ORM system. That's because really this
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
-export abstract class EntityTypeHandler<I extends string | number, E extends {id: I}> {
+export abstract class EntityTypeHandler<I extends string | number,
+T extends {id: any} & Record<A, string | number | null> & Record<S, {id: any} | null> & Record<M, {id: any}[]>,
+A extends string | never = string,
+S extends string | never = string,
+M extends string | never = string> {
     /**
      *
      * @param typeless
@@ -27,7 +31,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
     /**
      *
      */
-    protected abstract schema: Schema<any, any, any, any>
+    protected abstract schema: Schema<T, A, S, M>
 
     /**
      *
@@ -35,7 +39,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract create(id: I, data: Partial<E>): boolean
+    abstract create(id: I, data: Partial<T>): boolean
     /**
      *
      * @param ids
@@ -59,7 +63,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
      * @param include
      */
     abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): {
-        data: Partial<E>[],
+        data: Partial<T>[],
         included?: any[],
         nextPage?: any,
     }
@@ -70,7 +74,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
      * this and the relation is _not_ already in the response, it'll be
      * injected. If it is already in the response, the type will be set.
      */
-    abstract readonly localRelations: Partial<Record<string & keyof E, {field: string, type: string}[]>>
+    abstract readonly localRelations: Partial<Record<string & S | M, {field: string, type: string}[]>>
 
     /**
      * Getting upstream relations for the object _may_ be a little complex for
@@ -100,7 +104,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
      * @throws FIXME if the user has no access
      * @returns
      */
-    abstract getOne(id: I, include?: string[]): {data: Partial<E>, included?: any[]} | null
+    abstract getOne(id: I, include?: string[]): {data: Partial<T>, included?: any[]} | null
 
     /**
      * Handles data after it's come out of getOne() or getMany().
@@ -202,7 +206,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
                     }
                 }
                 const datumOut: JsonApiData<any> = {
-                    attributes: <JsonApiData<E>["attributes"]>Object.fromEntries(
+                    attributes: <JsonApiData<T>["attributes"]>Object.fromEntries(
                         info.retainedAttributes.map(a => [a, datum[a]])
                     ),
                     id: "" + datum.id,
@@ -236,7 +240,7 @@ export abstract class EntityTypeHandler<I extends string | number, E extends {id
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract update(id: I, data: Partial<E>): boolean
+    abstract update(id: I, data: Partial<T>): boolean
 
     /**
      *
