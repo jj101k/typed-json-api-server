@@ -121,11 +121,11 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
     postProcess(dataInitial: Iterable<E_LOW_LEVEL>, length: number) {
         if(!length) {
             return {
-                data: [] as JsonApiData<any>[],
+                data: [] as JsonApiData<E_NOMINAL, A, S | M>[],
             }
         }
 
-        const data: JsonApiData<any>[] = []
+        const data: JsonApiData<E_NOMINAL, A, S | M>[] = []
         let included: JsonApiData<any>[] = []
         let firstRun = true
 
@@ -163,8 +163,8 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
 
                 const info = infoForType.get({schema, item: datum})
 
-                const singleRelationships: {[r: string]: {data: RelationIdType | null}} = {}
-                const multiRelationships: {[r: string]: {data: RelationIdType[]}} = {}
+                const singleRelationships: Partial<Record<S, {data: RelationIdType | null}>> = {}
+                const multiRelationships: Partial<Record<M, {data: RelationIdType[]}>> = {}
                 for(const [field, ft] of Object.entries(info.relations.many)) {
                     const v: Relation[] | undefined = datum[field]
                     if(!v) {
@@ -207,8 +207,8 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
                         singleRelationships[field] = {data: null}
                     }
                 }
-                const datumOut: JsonApiData<any> = {
-                    attributes: <JsonApiData<E_NOMINAL>["attributes"]>Object.fromEntries(
+                const datumOut: JsonApiData<E_NOMINAL, A, S | M> = {
+                    attributes: <JsonApiData<E_NOMINAL, A>["attributes"]>Object.fromEntries(
                         info.retainedAttributes.map(a => [a, datum[a]])
                     ),
                     id: "" + datum.id,
