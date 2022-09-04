@@ -11,10 +11,12 @@ export interface JsonApiMultiRelationship {
     data: JsonApiIdentity[]
 }
 
+export type JsonApiAttributeValue = string | number | object | null
+
 export interface JsonApiData<T> {
     id: string,
     type: string,
-    attributes: Partial<T> & {[n: string]: string | number | object | null}
+    attributes: Partial<T> & Record<string, JsonApiAttributeValue>
     relationships: Partial<Record<keyof T, JsonApiSingleRelationship | JsonApiMultiRelationship>>
 }
 export interface JsonApiResponseMulti<T> {

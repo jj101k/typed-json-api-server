@@ -1,7 +1,7 @@
 import { CacheableTypeInfo } from "./CacheableTypeInfo"
 import { JsonApiData } from "./JsonApiResponse"
 import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
-import { RelationIdType, Relation } from "./Relation"
+import { RelationIdType, Relation, RelationIdOnly } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
 import { Schema } from "./Schema"
 import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
@@ -14,24 +14,26 @@ import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
 export abstract class EntityTypeHandler<I extends string | number,
-T extends {id: any} & Record<A, string | number | null> & Record<S, {id: any} | null> & Record<M, {id: any}[]>,
+E_NOMINAL extends {id: I} & Record<A, string | number | null> & Record<S, RelationIdOnly | null> & Record<M, RelationIdOnly[]>,
 A extends string | never = string,
 S extends string | never = string,
-M extends string | never = string> {
+M extends string | never = string,
+E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<M, Relation[]>> = {id: any} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<M, Relation[]>>,
+> {
     /**
      *
      * @param typeless
      */
-    private *addType(typeless: Iterable<{id: I}>) {
+    private *addType(typeless: Iterable<E_LOW_LEVEL>) {
         for(const v of typeless) {
-            yield {...v, type: this.schema.type}
+            yield {...v, id: v.id, type: this.schema.type}
         }
     }
 
     /**
      *
      */
-    protected abstract schema: Schema<T, A, S, M>
+    protected abstract schema: Schema<E_NOMINAL, A, S, M>
 
     /**
      *
@@ -39,7 +41,7 @@ M extends string | never = string> {
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract create(id: I, data: Partial<T>): boolean
+    abstract create(id: I, data: Partial<E_NOMINAL>): boolean
     /**
      *
      * @param ids
@@ -63,7 +65,7 @@ M extends string | never = string> {
      * @param include
      */
     abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): {
-        data: Partial<T>[],
+        data: Partial<E_NOMINAL>[],
         included?: any[],
         nextPage?: any,
     }
@@ -104,7 +106,7 @@ M extends string | never = string> {
      * @throws FIXME if the user has no access
      * @returns
      */
-    abstract getOne(id: I, include?: string[]): {data: Partial<T>, included?: any[]} | null
+    abstract getOne(id: I, include?: string[]): {data: Partial<E_NOMINAL>, included?: any[]} | null
 
     /**
      * Handles data after it's come out of getOne() or getMany().
@@ -116,7 +118,7 @@ M extends string | never = string> {
      * @param length
      * @returns
      */
-    postProcess(dataInitial: Iterable<{id: I}>, length: number) {
+    postProcess(dataInitial: Iterable<E_LOW_LEVEL>, length: number) {
         if(!length) {
             return {
                 data: [] as JsonApiData<any>[],
@@ -206,7 +208,7 @@ M extends string | never = string> {
                     }
                 }
                 const datumOut: JsonApiData<any> = {
-                    attributes: <JsonApiData<T>["attributes"]>Object.fromEntries(
+                    attributes: <JsonApiData<E_NOMINAL>["attributes"]>Object.fromEntries(
                         info.retainedAttributes.map(a => [a, datum[a]])
                     ),
                     id: "" + datum.id,
@@ -240,7 +242,7 @@ M extends string | never = string> {
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract update(id: I, data: Partial<T>): boolean
+    abstract update(id: I, data: Partial<E_NOMINAL>): boolean
 
     /**
      *

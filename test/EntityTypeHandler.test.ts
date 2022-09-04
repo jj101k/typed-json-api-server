@@ -27,6 +27,7 @@ describe("Entity Type handling", () => {
                 for(let i = 0; i < count; i++) {
                     yield {
                         id: "" + (i + 1),
+                        name: "Test",
                         author: {
                             id: "42",
                             name: "D Adams",
@@ -141,12 +142,14 @@ describe("Entity Type handling", () => {
     describe("Unjoined", () => {
         const bigResponseObject = [...new Array(1000)].map((_, i) => ({
             id: "" + (i + 1),
+            name: "Test",
             author: {
                 id: "42",
             },
         }))
         const bigResponseNumber = [...new Array(1000)].map((_, i) => ({
             id: "" + (i + 1),
+            name: "Test",
             author: 42,
         }))
         it("can handle a big response (object)", () => {
