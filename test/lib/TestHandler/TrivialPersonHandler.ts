@@ -5,6 +5,6 @@ import { PersonSchema } from "../TestSchema/PersonSchema"
 /**
  *
  */
-export class TrivialPersonHandler extends TrivialFakeHandler<string, Person, PersonAttributeKey, PersonSingleRelationKey, never> {
+export class TrivialPersonHandler extends TrivialFakeHandler<string, Person, PersonAttributeKey, never, never, PersonSingleRelationKey> {
     protected schema = PersonSchema
 }

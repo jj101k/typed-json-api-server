@@ -3,10 +3,12 @@ import { EntityTypeHandler } from "../../../src/EntityTypeHandler"
 /**
  *
  */
-export abstract class TrivialFakeHandler<I extends string | number, T extends {id: any} & Record<A, string | number | null> & Record<S, {id: any} | null> & Record<M, {id: any}[]>,
-A extends string | never = string,
-S extends string | never = string,
-M extends string | never = string> extends EntityTypeHandler<I, T, A, S, M> {
+export abstract class TrivialFakeHandler<I extends string | number, T extends {id: any} & Record<A, string | number | null> & Record<S, {id: any} | null> & Record<M, {id: any}[]> & Record<SR, {id: any}>,
+A extends string | never,
+S extends string | never,
+M extends string | never,
+SR extends string | never
+> extends EntityTypeHandler<I, T, A, S, M, SR> {
     create(id: I, data: Partial<T>): boolean {
         return false
     }

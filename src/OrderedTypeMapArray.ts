@@ -5,7 +5,7 @@ import { Schema } from "./Schema"
  *
  */
 export class OrderedTypeMapArray<T extends {type: string}  = any & {type: string}> extends OrderedMapArray<T, Schema<any>> {
-    protected getMapKey(key: Schema<any, string, string, string>): string {
+    protected getMapKey(key: Schema<any>): string {
         return key.type
     }
 

@@ -14,11 +14,12 @@ import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
 export abstract class EntityTypeHandler<I extends string | number,
-E_NOMINAL extends {id: I} & Record<A, string | number | null> & Record<S, RelationIdOnly | null> & Record<M, RelationIdOnly[]>,
-A extends string | never = string,
-S extends string | never = string,
-M extends string | never = string,
-E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<M, Relation[]>> = {id: any} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<M, Relation[]>>,
+E_NOMINAL extends {id: I} & Record<A, string | number | null> & Record<S, RelationIdOnly | null> & Record<SR, RelationIdOnly> & Record<M, RelationIdOnly[]>,
+A extends string | never,
+S extends string | never,
+M extends string | never,
+SR extends string | never,
+E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<SR, Relation>> & Partial<Record<M, Relation[]>> = {id: any} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<SR, Relation>> & Partial<Record<M, Relation[]>>,
 > {
     /**
      *
@@ -33,7 +34,7 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
     /**
      *
      */
-    protected abstract schema: Schema<E_NOMINAL, A, S, M>
+    protected abstract schema: Schema<E_NOMINAL, A, S, M, SR>
 
     /**
      *

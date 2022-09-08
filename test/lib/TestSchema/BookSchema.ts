@@ -5,7 +5,7 @@ import { Book, BookAttributeKey, BookSingleRelationKey, BookSingleRelationRequir
 /**
  *
  */
-export const BookSchema: Schema<Book, BookAttributeKey, BookSingleRelationRequiredKey | BookSingleRelationKey, never> = {
+export const BookSchema: Schema<Book, BookAttributeKey, BookSingleRelationKey, never, BookSingleRelationRequiredKey> = {
     attributeSchema: {notNullable: {name: "string"}, nullable: {}},
     get relationshipSchema() {
         return {singleRequired: {author: [AuthorSchema]}, single: {forewordAuthor: [AuthorSchema]}}

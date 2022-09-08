@@ -5,6 +5,6 @@ import { BookSchema } from "../TestSchema/BookSchema"
 /**
  *
  */
-export class TrivialBookHandler extends TrivialFakeHandler<string, Book, BookAttributeKey, BookSingleRelationKey | BookSingleRelationRequiredKey, never> {
+export class TrivialBookHandler extends TrivialFakeHandler<string, Book, BookAttributeKey, BookSingleRelationKey, never, BookSingleRelationRequiredKey> {
     protected schema = BookSchema
 }

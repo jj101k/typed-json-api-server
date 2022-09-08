@@ -7,6 +7,6 @@ import { TrivialFakeHandler } from "./TrivialFakeHandler"
 /**
  *
  */
-export class TrivialAuthorHandler extends TrivialFakeHandler<string, Author, AuthorAttributeKey, never, AuthorMultiRelationKey> {
+export class TrivialAuthorHandler extends TrivialFakeHandler<string, Author, AuthorAttributeKey, never, AuthorMultiRelationKey, never> {
     protected schema = AuthorSchema
 }
