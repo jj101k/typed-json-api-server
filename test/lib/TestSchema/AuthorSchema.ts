@@ -5,7 +5,7 @@ import { BookSchema } from "./BookSchema"
 /**
  *
  */
-export const AuthorSchema: Schema<Author, AuthorAttributeKey, never, AuthorMultiRelationKey, never> = {
+export const AuthorSchema: Schema<AuthorAttributeKey, never, AuthorMultiRelationKey, never> = {
     attributeSchema: {notNullable: {name: "string"}, nullable: {}},
     get relationshipSchema() {
         return {many: {books: [BookSchema]}}

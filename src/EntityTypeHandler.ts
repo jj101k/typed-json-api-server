@@ -1,9 +1,9 @@
 import { CacheableTypeInfo } from "./CacheableTypeInfo"
 import { JsonApiData } from "./JsonApiResponse"
 import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
-import { RelationIdType, Relation, RelationIdOnly } from "./Relation"
+import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
-import { Schema } from "./Schema"
+import { Schema, EntityMatchingSchema } from "./Schema"
 import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
 
 /**
@@ -13,19 +13,12 @@ import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
  * You _might_ want to do this without an ORM system. That's because really this
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
-export abstract class EntityTypeHandler<I extends string | number,
-E_NOMINAL extends {id: I} & Record<A, string | number | null> & Record<S, RelationIdOnly | null> & Record<SR, RelationIdOnly> & Record<M, RelationIdOnly[]>,
-A extends string | never,
-S extends string | never,
-M extends string | never,
-SR extends string | never,
-E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<SR, Relation>> & Partial<Record<M, Relation[]>> = {id: any} & Record<A, string | number | null> & Partial<Record<S, Relation | null>> & Partial<Record<SR, Relation>> & Partial<Record<M, Relation[]>>,
-> {
+export abstract class EntityTypeHandler<I extends string | number, S extends Schema> {
     /**
      *
      * @param typeless
      */
-    private *addType(typeless: Iterable<E_LOW_LEVEL>) {
+    private *addType(typeless: Iterable<EntityMatchingSchema<S, Relation>>) {
         for(const v of typeless) {
             yield {...v, id: v.id, type: this.schema.type}
         }
@@ -34,7 +27,7 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
     /**
      *
      */
-    protected abstract schema: Schema<E_NOMINAL, A, S, M, SR>
+    protected abstract schema: S
 
     /**
      *
@@ -42,7 +35,7 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract create(id: I, data: Partial<E_NOMINAL>): boolean
+    abstract create(id: I, data: Partial<EntityMatchingSchema<S>>): boolean
     /**
      *
      * @param ids
@@ -66,18 +59,10 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
      * @param include
      */
     abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): {
-        data: Partial<E_NOMINAL>[],
+        data: Partial<EntityMatchingSchema<S>>[],
         included?: any[],
         nextPage?: any,
     }
-
-    /**
-     * This defines how relations look locally (ie, an ID in the entity
-     * itself, typically defining a single parent relationship). If you provide
-     * this and the relation is _not_ already in the response, it'll be
-     * injected. If it is already in the response, the type will be set.
-     */
-    abstract readonly localRelations: Partial<Record<string & S | M, {field: string, type: string}[]>>
 
     /**
      * Getting upstream relations for the object _may_ be a little complex for
@@ -107,7 +92,7 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
      * @throws FIXME if the user has no access
      * @returns
      */
-    abstract getOne(id: I, include?: string[]): {data: Partial<E_NOMINAL>, included?: any[]} | null
+    abstract getOne(id: I, include?: string[]): {data: Partial<EntityMatchingSchema<S>>, included?: any[]} | null
 
     /**
      * Handles data after it's come out of getOne() or getMany().
@@ -119,15 +104,16 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
      * @param length
      * @returns
      */
-    postProcess(dataInitial: Iterable<E_LOW_LEVEL>, length: number) {
+    postProcess(dataInitial: Iterable<EntityMatchingSchema<S, Relation>>, length: number) {
+        type J = JsonApiData<S>
         if(!length) {
             return {
-                data: [] as JsonApiData<E_NOMINAL, A, S | M>[],
+                data: [] as J[],
             }
         }
 
-        const data: JsonApiData<E_NOMINAL, A, S | M>[] = []
-        let included: JsonApiData<any>[] = []
+        const data: J[] = []
+        let included: JsonApiData<Schema>[] = []
         let firstRun = true
 
         const dataToProcess = new OrderedTypeMapArray()
@@ -164,8 +150,8 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
 
                 const info = infoForType.get({schema, item: datum})
 
-                const singleRelationships: Partial<Record<S, {data: RelationIdType | null}>> = {}
-                const multiRelationships: Partial<Record<M, {data: RelationIdType[]}>> = {}
+                const singleRelationships: Partial<Record<string, {data: RelationIdType | null}>> = {}
+                const multiRelationships: Partial<Record<string, {data: RelationIdType[]}>> = {}
                 for(const [field, ft] of Object.entries(info.relations.many)) {
                     const v: Relation[] | undefined = datum[field]
                     if(!v) {
@@ -208,20 +194,31 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
                         singleRelationships[field] = {data: null}
                     }
                 }
-                const datumOut: JsonApiData<E_NOMINAL, A, S | M> = {
-                    attributes: <JsonApiData<E_NOMINAL, A>["attributes"]>Object.fromEntries(
-                        info.retainedAttributes.map(a => [a, datum[a]])
-                    ),
-                    id: "" + datum.id,
-                    relationships: {
-                        ...multiRelationships,
-                        ...singleRelationships,
-                    },
-                    type: datum.type,
-                }
                 if(firstRun) {
-                    data.push(datumOut)
+                    const datumOut: J = {
+                        attributes: <J["attributes"]>Object.fromEntries(
+                            info.retainedAttributes.map(a => [a, datum[a]])
+                        ),
+                        id: "" + datum.id,
+                        relationships: <J["relationships"]>{
+                            ...multiRelationships,
+                            ...singleRelationships,
+                        },
+                        type: datum.type,
+                    }
+                    data.push(datumOut as J)
                 } else {
+                    const datumOut: JsonApiData<Schema> = {
+                        attributes: <JsonApiData<Schema>["attributes"]>Object.fromEntries(
+                            info.retainedAttributes.map(a => [a, datum[a]])
+                        ),
+                        id: "" + datum.id,
+                        relationships: {
+                            ...multiRelationships,
+                            ...singleRelationships,
+                        },
+                        type: datum.type,
+                    }
                     included.push(datumOut)
                 }
             }
@@ -243,7 +240,7 @@ E_LOW_LEVEL extends {id: I} & Record<A, string | number | null> & Partial<Record
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract update(id: I, data: Partial<E_NOMINAL>): boolean
+    abstract update(id: I, data: Partial<EntityMatchingSchema<S>>): boolean
 
     /**
      *

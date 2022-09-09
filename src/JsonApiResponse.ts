@@ -1,3 +1,5 @@
+import { Schema, SchemaNullableAttributeKey, SchemaRelationMultiKey, SchemaRelationSingleOptionalKey, SchemaRelationSingleRequiredKey, SchemaRequiredAttributeKey } from "./Schema"
+
 export interface JsonApiIdentity {
     type: string
     id: string
@@ -13,21 +15,32 @@ export interface JsonApiMultiRelationship {
 
 export type JsonApiAttributeValue = string | number | object | null
 
-export interface JsonApiData<
-    T,
-    A extends (string | never) & keyof T = string & keyof T,
-    R extends (string | never) & keyof T = string & keyof T
+/**
+ *
+ */
+export interface JsonApiDataComposed<
+    A extends string | never,
+    R extends string | never
 > {
     id: string,
     type: string,
     attributes: Record<A, JsonApiAttributeValue>
     relationships: Partial<Record<R, JsonApiSingleRelationship | JsonApiMultiRelationship>>
 }
-export interface JsonApiResponseMulti<T> {
-    data: JsonApiData<T>[]
+
+/**
+ *
+ */
+export type JsonApiData<S extends Schema> = JsonApiDataComposed<
+    SchemaNullableAttributeKey<S> | SchemaRequiredAttributeKey<S>,
+    SchemaRelationMultiKey<S> | SchemaRelationSingleOptionalKey<S> | SchemaRelationSingleRequiredKey<S>
+>
+
+export interface JsonApiResponseMulti<J extends JsonApiDataComposed<any, any>> {
+    data: J[]
 }
-export interface JsonApiResponseSingle<T> {
-    data: JsonApiData<T> | null
+export interface JsonApiResponseSingle<J extends JsonApiDataComposed<any, any>> {
+    data: J | null
 }
 
-export type JsonApiResponse<T> = JsonApiResponseSingle<T> | JsonApiResponseMulti<T>
+export type JsonApiResponse<J extends JsonApiDataComposed<any, any>> = JsonApiResponseSingle<J> | JsonApiResponseMulti<J>

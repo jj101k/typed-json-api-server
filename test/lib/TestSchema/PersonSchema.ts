@@ -4,7 +4,7 @@ import { Person, PersonAttributeKey, PersonSingleRelationKey } from "../TestEnti
 /**
  *
  */
-export const PersonSchema: Schema<Person, PersonAttributeKey, never, never, PersonSingleRelationKey> = {
+export const PersonSchema: Schema<PersonAttributeKey, never, never, PersonSingleRelationKey> = {
     attributeSchema: {notNullable: {name: "string"}, nullable: {}},
     get relationshipSchema() {
         return {single: {bestFriend: [PersonSchema]}}

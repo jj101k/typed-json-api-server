@@ -38,7 +38,7 @@ export class FetchedRelationsInfo {
      * @param schema
      * @returns
      */
-    static build<T extends { id: any}  = any>(datum: Partial<T>, schema: Schema<T>): FetchedRelationsInfo {
+    static build<T extends { id: any}  = any>(datum: Partial<T>, schema: Schema): FetchedRelationsInfo {
         const manyKnown: Record<string, RelationFormatter<any>> = {}
         const manyUnknown: Record<string, Array<Schema<any>>> = {}
         const singleKnown: Record<string, RelationFormatter<any>> = {}
