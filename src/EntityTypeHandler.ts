@@ -3,7 +3,8 @@ import { JsonApiData } from "./JsonApiResponse"
 import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
 import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
-import { Schema, EntityMatchingSchema } from "./Schema"
+import { Schema } from "./Schema"
+import { EntityMatchingSchema } from "./EntityMatchingSchema"
 import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
 
 /**

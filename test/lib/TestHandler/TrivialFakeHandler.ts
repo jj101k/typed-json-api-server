@@ -1,5 +1,6 @@
 import { EntityTypeHandler } from "../../../src/EntityTypeHandler"
-import { Schema, EntityMatchingSchema } from "../../../src/Schema"
+import { Schema } from "../../../src/Schema"
+import { EntityMatchingSchema } from "../../../src/EntityMatchingSchema"
 
 /**
  *

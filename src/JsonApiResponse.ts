@@ -1,4 +1,5 @@
-import { Schema, SchemaNullableAttributeKey, SchemaRelationMultiKey, SchemaRelationSingleOptionalKey, SchemaRelationSingleRequiredKey, SchemaRequiredAttributeKey } from "./Schema"
+import { Schema } from "./Schema"
+import { SchemaNullableAttributeKey, SchemaRelationMultiKey, SchemaRelationSingleOptionalKey, SchemaRelationSingleRequiredKey, SchemaRequiredAttributeKey } from "./EntityMatchingSchema"
 
 export interface JsonApiIdentity {
     type: string
