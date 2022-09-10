@@ -25,7 +25,7 @@ export interface JsonApiDataComposed<
 > {
     id: string,
     type: string,
-    attributes: Record<A, JsonApiAttributeValue>
+    attributes: Partial<Record<A, JsonApiAttributeValue>>
     relationships: Partial<Record<R, JsonApiSingleRelationship | JsonApiMultiRelationship>>
 }
 
@@ -37,11 +37,13 @@ export type JsonApiData<S extends Schema> = JsonApiDataComposed<
     SchemaRelationMultiKey<S> | SchemaRelationSingleOptionalKey<S> | SchemaRelationSingleRequiredKey<S>
 >
 
-export interface JsonApiResponseMulti<J extends JsonApiDataComposed<any, any>> {
-    data: J[]
-}
-export interface JsonApiResponseSingle<J extends JsonApiDataComposed<any, any>> {
-    data: J | null
+type JsonApiPossibleArray<J extends JsonApiDataComposed<any, any>> = J[] | J | null
+
+interface JsonApiResponseAny<D extends JsonApiPossibleArray<JsonApiDataComposed<any, any>>> {
+    data: D
+    included?: Array<JsonApiDataComposed<any, any>>
 }
 
-export type JsonApiResponse<J extends JsonApiDataComposed<any, any>> = JsonApiResponseSingle<J> | JsonApiResponseMulti<J>
+export type JsonApiResponseMulti<J extends JsonApiDataComposed<any, any>> = JsonApiResponseAny<J[]>
+
+export type JsonApiResponseSingle<J extends JsonApiDataComposed<any, any>> = JsonApiResponseAny<J | null>

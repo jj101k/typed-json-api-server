@@ -1,7 +1,7 @@
 import { EntityTypeHandler } from "../../../src/EntityTypeHandler"
 import { Schema } from "../../../src/Schema"
 import { EntityMatchingSchema } from "../../../src/EntityMatchingSchema"
-import { JsonApiData } from "../../../src/JsonApiResponse"
+import { JsonApiData, JsonApiResponseMulti, JsonApiResponseSingle } from "../../../src/JsonApiResponse"
 
 /**
  *
@@ -18,12 +18,12 @@ export abstract class TrivialFakeHandler<I extends string | number, S extends Sc
         }
         return true
     }
-    async getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[] | undefined): Promise<{ data: Partial<EntityMatchingSchema<S>>[]; included?: any[] | undefined; nextPage?: any }> {
+    async getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[] | undefined): Promise<JsonApiResponseMulti<JsonApiData<S>> & {nextPage?: any}> {
         return {
             data: [],
         }
     }
-    async getOne(id: I, include?: string[] | undefined): Promise<{ data: JsonApiData<S>, included?: any[] | undefined } | null> {
+    async getOne(id: I, include?: string[] | undefined): Promise<JsonApiResponseSingle<JsonApiData<S>> | null> {
         if(!this.store.has(id)) {
             throw new Error()
         }

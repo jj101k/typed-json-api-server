@@ -1,5 +1,5 @@
 import { CacheableTypeInfo } from "./CacheableTypeInfo"
-import { JsonApiData } from "./JsonApiResponse"
+import { JsonApiData, JsonApiMultiRelationship, JsonApiResponseMulti, JsonApiResponseSingle, JsonApiSingleRelationship } from "./JsonApiResponse"
 import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
 import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
@@ -59,11 +59,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @param page
      * @param include
      */
-    abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): Promise<{
-        data: Partial<EntityMatchingSchema<S>>[],
-        included?: any[],
-        nextPage?: any,
-    }>
+    abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): Promise<JsonApiResponseMulti<JsonApiData<S>> & {nextPage?: any}>
 
     /**
      * Getting upstream relations for the object _may_ be a little complex for
@@ -93,7 +89,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @throws FIXME if the user has no access
      * @returns
      */
-    abstract getOne(id: I, include?: string[]): Promise<{data: JsonApiData<S>, included?: any[]} | null>
+    abstract getOne(id: I, include?: string[]): Promise<JsonApiResponseSingle<JsonApiData<S>> | null>
 
     /**
      * Handles data after it's come out of getOne() or getMany().
@@ -109,7 +105,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
         type J = JsonApiData<S>
         if(!length) {
             return {
-                data: [] as J[],
+                data: [],
             }
         }
 
@@ -151,8 +147,8 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
 
                 const info = infoForType.get({schema, item: datum})
 
-                const singleRelationships: Partial<Record<string, {data: RelationIdType | null}>> = {}
-                const multiRelationships: Partial<Record<string, {data: RelationIdType[]}>> = {}
+                const singleRelationships: Record<string, JsonApiSingleRelationship> = {}
+                const multiRelationships: Record<string, JsonApiMultiRelationship> = {}
                 for(const [field, ft] of Object.entries(info.relations.many)) {
                     const v: Relation[] | undefined = datum[field]
                     if(!v) {
@@ -230,7 +226,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
             }
         }
         return {
-            data: data,
+            data,
             included,
         }
     }
