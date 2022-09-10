@@ -147,14 +147,14 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
 
                 const info = infoForType.get({schema, item: datum})
 
-                const singleRelationships: Record<string, JsonApiSingleRelationship> = {}
-                const multiRelationships: Record<string, JsonApiMultiRelationship> = {}
+                const singleRelationships: Record<string, RelationIdType | null> = {}
+                const multiRelationships: Record<string, RelationIdType[]> = {}
                 for(const [field, ft] of Object.entries(info.relations.many)) {
                     const v: Relation[] | undefined = datum[field]
                     if(!v) {
                         continue
                     } else if(v.length == 0) {
-                        multiRelationships[field] = {data: []}
+                        multiRelationships[field] = []
                         continue
                     }
                     const formatter = ft as RelationFormatter<any>
@@ -162,19 +162,19 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
                     if(formatter.hasData) {
                         dataToProcess.push(ft.schemata, ...items.filter(item => includeSeenByType.addOnce(item.type, item.id)))
                     }
-                    multiRelationships[field] = {data: items.map(item => ({id: item.id, type: item.type}))}
+                    multiRelationships[field] = items.map(item => ({id: item.id, type: item.type}))
                 }
                 for(const field of Object.keys(info.relations.manyUnknown)) {
                     if(datum[field]) {
                         // It must be empty, otherwise it'd have a format
-                        multiRelationships[field] = {data: []}
+                        multiRelationships[field] = []
                     }
                 }
                 for(const [field, ft] of Object.entries(info.relations.single)) {
                     if(datum[field] === undefined) {
                         continue
                     } else if(datum[field] === null) {
-                        singleRelationships[field] = {data: null}
+                        singleRelationships[field] = null
                         continue
                     }
                     const v: Relation = datum[field]
@@ -183,37 +183,35 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
                     if(formatter.hasData && includeSeenByType.addOnce(item.type, item.id)) {
                         dataToProcess.push(ft.schemata, item)
                     }
-                    singleRelationships[field] = {data: {id: item.id, type: item.type}}
+                    singleRelationships[field] = {id: item.id, type: item.type}
                 }
                 for(const field of Object.keys(info.relations.singleUnknown)) {
                     if(datum[field] !== undefined) {
                         // It must be null, otherwise it'd have a format
-                        singleRelationships[field] = {data: null}
+                        singleRelationships[field] = null
                     }
                 }
+                const relationships = Object.fromEntries([
+                    ...Object.entries(multiRelationships).map(([n, rs]) => [n, {data: rs}]),
+                    ...Object.entries(singleRelationships).map(([n, rs]) => [n, {data: rs}]),
+                ])
                 if(firstRun) {
                     const datumOut: J = {
                         attributes: <J["attributes"]>Object.fromEntries(
                             info.retainedAttributes.map(a => [a, datum[a]])
                         ),
                         id: "" + datum.id,
-                        relationships: <J["relationships"]>{
-                            ...multiRelationships,
-                            ...singleRelationships,
-                        },
+                        relationships,
                         type: datum.type,
                     }
-                    data.push(datumOut as J)
+                    data.push(datumOut)
                 } else {
                     const datumOut: JsonApiData<Schema> = {
                         attributes: <JsonApiData<Schema>["attributes"]>Object.fromEntries(
                             info.retainedAttributes.map(a => [a, datum[a]])
                         ),
                         id: "" + datum.id,
-                        relationships: {
-                            ...multiRelationships,
-                            ...singleRelationships,
-                        },
+                        relationships,
                         type: datum.type,
                     }
                     included.push(datumOut)
