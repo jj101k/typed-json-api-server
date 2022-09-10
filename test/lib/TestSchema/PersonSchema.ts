@@ -1,5 +1,5 @@
 import { Schema } from "../../../src/Schema"
-import { Person, PersonAttributeKey, PersonSingleRelationKey } from "../TestEntity/Person"
+import { PersonAttributeKey, PersonSingleRelationKey } from "../TestEntity/Person"
 
 /**
  *

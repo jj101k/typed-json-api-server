@@ -1,6 +1,6 @@
 import { Schema } from "../../../src/Schema"
 import { AuthorSchema } from "./AuthorSchema"
-import { Book, BookAttributeKey, BookSingleRelationKey, BookSingleRelationRequiredKey } from "../TestEntity/Book"
+import { BookAttributeKey, BookSingleRelationKey, BookSingleRelationRequiredKey } from "../TestEntity/Book"
 
 /**
  *

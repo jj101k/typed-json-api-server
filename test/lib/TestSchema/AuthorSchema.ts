@@ -1,5 +1,5 @@
 import { Schema } from "../../../src/Schema"
-import { Author, AuthorAttributeKey, AuthorMultiRelationKey } from "../TestEntity/Author"
+import { AuthorAttributeKey, AuthorMultiRelationKey } from "../TestEntity/Author"
 import { BookSchema } from "./BookSchema"
 
 /**
