@@ -222,5 +222,16 @@ describe("Entity Type handling", () => {
             expect(deleteResult).to.be.true
             expect(await bookHandler.getOne(bookId).then(() => false, () => true)).to.be.true
         })
+        it("can update a value", async () => {
+            const book = {
+                name: "HHGG"
+            }
+            const bookId = "42"
+            await bookHandler.create(bookId, book)
+            const result = await bookHandler.update(bookId, {name: "H.H.G.G"})
+            expect(result).to.be.true
+            const stored = await bookHandler.getOne(bookId)
+            expect(stored.data).to.haveOwnProperty("attributes").with.ownProperty("name").eq("H.H.G.G")
+        })
     })
 })
