@@ -207,4 +207,20 @@ describe("Entity Type handling", () => {
             expect(response).to.haveOwnProperty("included").which.is.instanceOf(Array).with.ownProperty("length").eq(0)
         })
     })
+    describe("Storage", () => {
+        it("can store, retrieve and delete a value", () => {
+            const book = {
+                name: "HHGG"
+            }
+            const bookId = "42"
+            expect(() => bookHandler.getOne(bookId)).to.throw
+            const result = bookHandler.create(bookId, book)
+            expect(result).to.be.true
+            const stored = bookHandler.getOne(bookId)
+            expect(stored.data).to.haveOwnProperty("attributes").with.ownProperty("name").eq("HHGG")
+            const deleteResult = bookHandler.delete(bookId)
+            expect(deleteResult).to.be.true
+            expect(() => bookHandler.getOne(bookId)).to.throw
+        })
+    })
 })

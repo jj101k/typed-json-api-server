@@ -93,7 +93,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @throws FIXME if the user has no access
      * @returns
      */
-    abstract getOne(id: I, include?: string[]): {data: Partial<EntityMatchingSchema<S>>, included?: any[]} | null
+    abstract getOne(id: I, include?: string[]): {data: JsonApiData<S>, included?: any[]} | null
 
     /**
      * Handles data after it's come out of getOne() or getMany().
