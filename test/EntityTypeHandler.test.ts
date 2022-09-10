@@ -208,19 +208,19 @@ describe("Entity Type handling", () => {
         })
     })
     describe("Storage", () => {
-        it("can store, retrieve and delete a value", () => {
+        it("can store, retrieve and delete a value", async () => {
             const book = {
                 name: "HHGG"
             }
             const bookId = "42"
-            expect(() => bookHandler.getOne(bookId)).to.throw
-            const result = bookHandler.create(bookId, book)
+            expect(await bookHandler.getOne(bookId).then(() => false, () => true)).to.be.true
+            const result = await bookHandler.create(bookId, book)
             expect(result).to.be.true
-            const stored = bookHandler.getOne(bookId)
+            const stored = await bookHandler.getOne(bookId)
             expect(stored.data).to.haveOwnProperty("attributes").with.ownProperty("name").eq("HHGG")
-            const deleteResult = bookHandler.delete(bookId)
+            const deleteResult = await bookHandler.delete(bookId)
             expect(deleteResult).to.be.true
-            expect(() => bookHandler.getOne(bookId)).to.throw
+            expect(await bookHandler.getOne(bookId).then(() => false, () => true)).to.be.true
         })
     })
 })

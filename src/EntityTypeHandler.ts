@@ -36,13 +36,13 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract create(id: I, data: Partial<EntityMatchingSchema<S>>): boolean
+    abstract create(id: I, data: Partial<EntityMatchingSchema<S>>): Promise<boolean>
     /**
      *
      * @param ids
      * @throws FIXME if the user has no access
      */
-    abstract delete(...ids: I[])
+    abstract delete(...ids: I[]): Promise<boolean>
 
     /**
      * Traditionally, this should add further filter rules in the request
@@ -59,11 +59,11 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @param page
      * @param include
      */
-    abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): {
+    abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): Promise<{
         data: Partial<EntityMatchingSchema<S>>[],
         included?: any[],
         nextPage?: any,
-    }
+    }>
 
     /**
      * Getting upstream relations for the object _may_ be a little complex for
@@ -93,7 +93,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @throws FIXME if the user has no access
      * @returns
      */
-    abstract getOne(id: I, include?: string[]): {data: JsonApiData<S>, included?: any[]} | null
+    abstract getOne(id: I, include?: string[]): Promise<{data: JsonApiData<S>, included?: any[]} | null>
 
     /**
      * Handles data after it's come out of getOne() or getMany().
@@ -241,7 +241,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @param data
      * @throws FIXME if the user has no access
      */
-    abstract update(id: I, data: Partial<EntityMatchingSchema<S>>): boolean
+    abstract update(id: I, data: Partial<EntityMatchingSchema<S>>): Promise<boolean>
 
     /**
      *
@@ -249,5 +249,5 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @param id
      * @returns
      */
-    abstract userHasAccess(type: "read" | "write", id: I)
+    abstract userHasAccess(type: "read" | "write", id: I): Promise<boolean>
 }
