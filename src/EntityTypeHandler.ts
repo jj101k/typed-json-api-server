@@ -110,7 +110,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
         }
 
         const data: J[] = []
-        let included: JsonApiData<Schema>[] = []
+        const included: JsonApiData<Schema>[] = []
         let firstRun = true
 
         const dataToProcess = new OrderedTypeMapArray()
