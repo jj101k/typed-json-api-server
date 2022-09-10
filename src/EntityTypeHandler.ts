@@ -1,5 +1,5 @@
 import { CacheableTypeInfo } from "./CacheableTypeInfo"
-import { JsonApiData, JsonApiMultiRelationship, JsonApiResponseMulti, JsonApiResponseSingle, JsonApiSingleRelationship } from "./JsonApiResponse"
+import { JsonApiData, JsonApiResponseMulti, JsonApiResponseSingle } from "./JsonApiResponse"
 import { OrderedTypeMapArray } from "./OrderedTypeMapArray"
 import { RelationIdType, Relation } from "./Relation"
 import { RelationFormatter } from "./RelationFormatter"
