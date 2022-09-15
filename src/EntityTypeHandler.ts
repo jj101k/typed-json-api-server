@@ -6,6 +6,7 @@ import { RelationFormatter } from "./RelationFormatter"
 import { Schema } from "./Schema"
 import { EntityMatchingSchema } from "./EntityMatchingSchema"
 import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
+import { JsonApiFilter } from "./JsonApiFilter"
 
 /**
  * This is the main class for handling entities. This doesn't handle
@@ -14,7 +15,7 @@ import { ShadowTypeIdSet, TypeIdSet } from "./TypeIdSet"
  * You _might_ want to do this without an ORM system. That's because really this
  * doesn't want fully formed objects, and just the ID is fine for most cases.
  */
-export abstract class EntityTypeHandler<I extends string | number, S extends Schema> {
+export abstract class EntityTypeHandler<I extends string | number, S extends Schema, F = JsonApiFilter<S>> {
     /**
      *
      * @param typeless
@@ -59,7 +60,7 @@ export abstract class EntityTypeHandler<I extends string | number, S extends Sch
      * @param page
      * @param include
      */
-    abstract getMany(filter: any, objectsSeen: number, sort?: any, page?: any, include?: string[]): Promise<JsonApiResponseMulti<JsonApiData<S>> & {nextPage?: any}>
+    abstract getMany(filter: F, objectsSeen: number, sort?: any, page?: any, include?: string[]): Promise<JsonApiResponseMulti<JsonApiData<S>> & {nextPage?: any}>
 
     /**
      * Getting upstream relations for the object _may_ be a little complex for

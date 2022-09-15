@@ -208,6 +208,20 @@ describe("Entity Type handling", () => {
         })
     })
     describe("Storage", () => {
+        it("can search or retrieve multiple values", async () => {
+            const books = [
+                {id: "51", name: "REU"},
+                {id: "52", name: "SLTFATF"},
+            ]
+            for(const book of books) {
+                const result = await bookHandler.create(book.id, book)
+                expect(result).to.eq(true)
+            }
+            const stored1 = await bookHandler.getMany({name: "REU"}, 0)
+            expect(stored1).to.haveOwnProperty("data").with.ownProperty("length").eq(1)
+            const stored2 = await bookHandler.getMany({}, 0)
+            expect(stored2).to.haveOwnProperty("data").with.ownProperty("length").eq(2)
+        })
         it("can store, retrieve and delete a value", async () => {
             const book = {
                 name: "HHGG"
